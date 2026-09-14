@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Order Confirmed | Tirupati Jewellers</title>
+
+    <link rel="stylesheet" href="css/style.css">
+
+    <style>
+        .success-page {
+            max-width: 850px;
+            margin: 100px auto;
+            padding: 40px 25px;
+            text-align: center;
+        }
+
+        .success-icon {
+            width: 85px;
+            height: 85px;
+            margin: 0 auto 30px;
+            border-radius: 50%;
+            background: #a47b32;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 42px;
+        }
+
+        .success-page h1 {
+            font-size: 46px;
+            margin-bottom: 15px;
+        }
+
+        .success-page > p {
+            color: #666;
+            font-size: 17px;
+        }
+
+        .order-number {
+            margin: 35px auto;
+            padding: 22px;
+            max-width: 450px;
+            background: #f5f0e8;
+        }
+
+        .order-number span {
+            display: block;
+            font-size: 12px;
+            letter-spacing: 2px;
+            color: #777;
+            margin-bottom: 8px;
+        }
+
+        .order-number strong {
+            font-size: 23px;
+            letter-spacing: 1px;
+        }
+
+        .success-box {
+            margin-top: 35px;
+            padding: 30px;
+            text-align: left;
+            border: 1px solid #e5dfd5;
+            background: #fffdf9;
+        }
+
+        .success-box h2 {
+            margin-top: 0;
+            margin-bottom: 25px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 13px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .detail-row span {
+            color: #777;
+        }
+
+        .products {
+            margin-top: 25px;
+        }
+
+        .product-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #222;
+            font-size: 21px;
+            font-weight: bold;
+        }
+
+        .success-buttons {
+            margin-top: 40px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .success-btn {
+            display: inline-block;
+            padding: 15px 28px;
+            background: #171717;
+            color: white;
+            text-decoration: none;
+            letter-spacing: 1px;
+        }
+
+        .success-btn:hover {
+            background: #a47b32;
+        }
+
+        @media (max-width: 600px) {
+
+            .success-page h1 {
+                font-size: 34px;
+            }
+
+            .detail-row {
+                flex-direction: column;
+                gap: 5px;
+            }
+
+            .success-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <main class="success-page">
+
+        <div class="success-icon">
+            ✓
+        </div>
+
+        <h1>
+            Order Confirmed!
+        </h1>
+
+        <p>
+            Thank you for choosing Tirupati Jewellers.
+        </p>
+
+        <div class="order-number">
+
+            <span>
+                ORDER NUMBER
+            </span>
+
+            <strong id="orderId">
+                Loading...
+            </strong>
+
+        </div>
+
+
+        <div class="success-box">
+
+            <h2>
+                Order Details
+            </h2>
+
+            <div class="detail-row">
+
+                <span>
+                    Customer
+                </span>
+
+                <strong id="customerName">
+                    -
+                </strong>
+
+            </div>
+
+            <div class="detail-row">
+
+                <span>
+                    Phone
+                </span>
+
+                <strong id="customerPhone">
+                    -
+                </strong>
+
+            </div>
+
+            <div class="detail-row">
+
+                <span>
+                    Payment
+                </span>
+
+                <strong id="paymentMethod">
+                    -
+                </strong>
+
+            </div>
+
+            <div class="detail-row">
+
+                <span>
+                    Delivery Address
+                </span>
+
+                <strong id="customerAddress">
+                    -
+                </strong>
+
+            </div>
+
+
+            <div class="products">
+
+                <h3>
+                    Products
+                </h3>
+
+                <div id="productList"></div>
+
+            </div>
+
+
+            <div class="total-row">
+
+                <span>
+                    Total
+                </span>
+
+                <span id="totalAmount">
+                    ₹0
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="success-buttons">
+
+            <a
+                href="shop.html"
+                class="success-btn"
+            >
+                CONTINUE SHOPPING
+            </a>
+
+            <a
+                href="index.html"
+                class="success-btn"
+            >
+                BACK TO HOME
+            </a>
+
+        </div>
+
+    </main>
+
+
+    <script>
+
+        const order = JSON.parse(
+            localStorage.getItem("latestOrder")
+        );
+
+
+        if (!order) {
+
+            document.querySelector(
+                ".success-page"
+            ).innerHTML = `
+
+                <h1>
+                    No Order Found
+                </h1>
+
+                <p>
+                    We couldn't find your recent order.
+                </p>
+
+                <br>
+
+                <a
+                    href="shop.html"
+                    class="success-btn"
+                >
+                    GO SHOPPING
+                </a>
+            `;
+
+        } else {
+
+            document.getElementById(
+                "orderId"
+            ).textContent = order.orderId;
+
+
+            document.getElementById(
+                "customerName"
+            ).textContent =
+                order.customer.name;
+
+
+            document.getElementById(
+                "customerPhone"
+            ).textContent =
+                order.customer.phone;
+
+
+            document.getElementById(
+                "paymentMethod"
+            ).textContent =
+                order.customer.payment === "cod"
+                    ? "Cash on Delivery"
+                    : "Online Payment";
+
+
+            document.getElementById(
+                "customerAddress"
+            ).textContent =
+                `${order.customer.address}, ${order.customer.city}, ${order.customer.state} - ${order.customer.pincode}`;
+
+
+            const productList =
+                document.getElementById(
+                    "productList"
+                );
+
+
+            order.items.forEach(item => {
+
+                const quantity =
+                    item.quantity || 1;
+
+                const itemTotal =
+                    Number(item.price) * quantity;
+
+
+                productList.innerHTML += `
+
+                    <div class="product-row">
+
+                        <span>
+                            ${item.name} × ${quantity}
+                        </span>
+
+                        <strong>
+                            ₹${itemTotal.toLocaleString("en-IN")}
+                        </strong>
+
+                    </div>
+
+                `;
+
+            });
+
+
+            document.getElementById(
+                "totalAmount"
+            ).textContent =
+                "₹" +
+                Number(order.total)
+                    .toLocaleString("en-IN");
+        }
+
+    </script>
+
+</body>
+
+</html>

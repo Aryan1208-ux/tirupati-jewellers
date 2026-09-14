@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Shopping Cart | Tirupati Jewellers</title>
+
+    <link rel="stylesheet" href="css/style.css">
+
+    <style>
+
+        /* ================= CART PAGE ================= */
+
+        .cart-page {
+            max-width: 1200px;
+            margin: 140px auto 100px;
+            padding: 0 30px;
+        }
+
+        .cart-heading {
+            margin-bottom: 55px;
+        }
+
+        .cart-heading p {
+            color: #9a722b;
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 4px;
+            margin-bottom: 15px;
+        }
+
+        .cart-heading h1 {
+            font-size: clamp(42px, 6vw, 64px);
+            font-weight: 400;
+            line-height: 1;
+            margin: 0;
+        }
+
+
+        /* ================= CART LAYOUT ================= */
+
+        .cart-layout {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 65px;
+            align-items: start;
+        }
+
+
+        /* ================= CART ITEMS ================= */
+
+        .cart-items {
+            background: #fff;
+            padding: 0 30px;
+        }
+
+        .cart-item {
+            display: grid;
+            grid-template-columns: 135px 1fr auto;
+            gap: 28px;
+            align-items: center;
+            padding: 30px 0;
+            border-bottom: 1px solid #e5dfd4;
+        }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+
+        .cart-item-image {
+            width: 135px;
+            height: 135px;
+            object-fit: cover;
+            background: #f4efe8;
+        }
+
+
+        .cart-category {
+            font-family: Arial, sans-serif;
+            color: #9a722b;
+            font-size: 9px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 9px;
+        }
+
+
+        .cart-item-info h3 {
+            font-size: 22px;
+            font-weight: 400;
+            margin: 0 0 8px;
+        }
+
+
+        .cart-item-price {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            color: #555;
+        }
+
+
+        /* ================= QUANTITY ================= */
+
+        .quantity-controls {
+            display: inline-flex;
+            align-items: center;
+            margin-top: 18px;
+            border: 1px solid #ddd6ca;
+        }
+
+
+        .quantity-controls button {
+            width: 38px;
+            height: 36px;
+            border: none;
+            background: #fff;
+            cursor: pointer;
+            font-size: 18px;
+            transition: 0.25s;
+        }
+
+
+        .quantity-controls button:hover {
+            background: #f4efe8;
+            color: #9a722b;
+        }
+
+
+        .quantity-controls span {
+            width: 42px;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+        }
+
+
+        /* ================= ITEM TOTAL ================= */
+
+        .cart-item-total {
+            text-align: right;
+            align-self: center;
+        }
+
+
+        .cart-item-total strong {
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+
+        .remove-btn {
+            display: block;
+            margin: 14px 0 0 auto;
+            padding: 0;
+            border: none;
+            background: none;
+            color: #888;
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+
+        .remove-btn:hover {
+            color: #9a722b;
+        }
+
+
+        /* ================= SUMMARY ================= */
+
+        .cart-summary {
+            position: sticky;
+            top: 110px;
+            background: #f4efe8;
+            padding: 38px;
+        }
+
+
+        .cart-summary h2 {
+            margin: 0 0 32px;
+            font-size: 28px;
+            font-weight: 400;
+        }
+
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+        }
+
+
+        .summary-total {
+            border-top: 1px solid #ccc4b7;
+            padding-top: 22px;
+            margin-top: 25px;
+            font-size: 19px;
+            font-weight: 600;
+        }
+
+
+        .checkout-btn {
+            display: block;
+            width: 100%;
+            padding: 18px 15px;
+            margin-top: 32px;
+            background: #171717;
+            color: white;
+            border: none;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            letter-spacing: 2px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+
+        .checkout-btn:hover {
+            background: #9a722b;
+            transform: translateY(-2px);
+        }
+
+
+        .continue-link {
+            display: block;
+            text-align: center;
+            margin-top: 18px;
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            letter-spacing: 1px;
+            color: #777;
+        }
+
+
+        .continue-link:hover {
+            color: #9a722b;
+        }
+
+
+        /* ================= EMPTY CART ================= */
+
+        .empty-cart {
+            background: #fff;
+            text-align: center;
+            padding: 110px 30px;
+        }
+
+
+        .empty-cart-icon {
+            font-size: 42px;
+            color: #b89552;
+            margin-bottom: 20px;
+        }
+
+
+        .empty-cart h2 {
+            font-size: 34px;
+            font-weight: 400;
+            margin-bottom: 12px;
+        }
+
+
+        .empty-cart p {
+            font-family: Arial, sans-serif;
+            color: #777;
+            font-size: 13px;
+        }
+
+
+        .continue-shopping {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 30px;
+            padding: 16px 30px;
+            background: #171717;
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+
+        .continue-shopping:hover {
+            background: #9a722b;
+        }
+
+
+        /* ================= SECURITY NOTE ================= */
+
+        .cart-security {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #d8d0c5;
+            font-family: Arial, sans-serif;
+            color: #777;
+            font-size: 10px;
+            line-height: 1.6;
+        }
+
+
+        /* ================= RESPONSIVE ================= */
+
+        @media (max-width: 900px) {
+
+            .cart-layout {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .cart-summary {
+                position: static;
+            }
+
+        }
+
+
+        @media (max-width: 650px) {
+
+            .cart-page {
+                margin-top: 100px;
+                padding: 0 15px;
+            }
+
+
+            .cart-heading {
+                margin-bottom: 35px;
+            }
+
+
+            .cart-heading h1 {
+                font-size: 42px;
+            }
+
+
+            .cart-items {
+                padding: 0 18px;
+            }
+
+
+            .cart-item {
+                grid-template-columns: 90px 1fr;
+                gap: 18px;
+                padding: 22px 0;
+            }
+
+
+            .cart-item-image {
+                width: 90px;
+                height: 90px;
+            }
+
+
+            .cart-item-info h3 {
+                font-size: 18px;
+            }
+
+
+            .cart-item-total {
+                grid-column: 2;
+                text-align: left;
+            }
+
+
+            .remove-btn {
+                margin-left: 0;
+            }
+
+
+            .cart-summary {
+                padding: 28px 22px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <!-- ================= HEADER ================= -->
+
+    <header class="header">
+
+        <div class="container navbar">
+
+            <a href="index.html" class="logo">
+
+                <span class="logo-main">
+                    TIRUPATI
+                </span>
+
+                <span class="logo-sub">
+                    JEWELLERS
+                </span>
+
+            </a>
+
+
+            <nav class="nav-links">
+
+                <a href="index.html">
+                    Home
+                </a>
+
+                <a href="shop.html">
+                    Shop
+                </a>
+
+                <a href="index.html#collections">
+                    Collections
+                </a>
+
+                <a href="index.html#about">
+                    About
+                </a>
+
+                <a href="index.html#contact">
+                    Contact
+                </a>
+
+            </nav>
+
+
+            <div class="nav-actions">
+
+                <a href="cart.html" class="cart-button">
+
+                    🛒
+
+                    <span id="cart-count">
+                        0
+                    </span>
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- ================= CART ================= -->
+
+    <main class="cart-page">
+
+
+        <div class="cart-heading">
+
+            <p>
+                YOUR BAG
+            </p>
+
+            <h1>
+                Shopping Cart
+            </h1>
+
+        </div>
+
+
+        <div id="cart-content">
+            <!-- Cart generated by JavaScript -->
+        </div>
+
+
+    </main>
+
+
+
+    <!-- ================= CART SCRIPT ================= -->
+
+    <script>
+
+        let cart =
+            JSON.parse(
+                localStorage.getItem("cart")
+            ) || [];
+
+
+        /* ================= RENDER CART ================= */
+
+        function renderCart() {
+
+            const container =
+                document.getElementById("cart-content");
+
+
+            updateCartCount();
+
+
+            /* EMPTY CART */
+
+            if (cart.length === 0) {
+
+                container.innerHTML = `
+
+                    <div class="empty-cart">
+
+                        <div class="empty-cart-icon">
+                            ♡
+                        </div>
+
+                        <h2>
+                            Your cart is empty
+                        </h2>
+
+                        <p>
+                            Discover something beautiful
+                            from Tirupati Jewellers.
+                        </p>
+
+                        <a
+                            href="shop.html"
+                            class="continue-shopping"
+                        >
+                            CONTINUE SHOPPING
+                        </a>
+
+                    </div>
+
+                `;
+
+                return;
+            }
+
+
+            let subtotal = 0;
+
+            let itemsHTML = "";
+
+
+            /* PRODUCTS */
+
+            cart.forEach((item, index) => {
+
+                const quantity =
+                    item.quantity || 1;
+
+                const itemTotal =
+                    item.price * quantity;
+
+                subtotal += itemTotal;
+
+
+                itemsHTML += `
+
+                    <div class="cart-item">
+
+
+                        <img
+                            class="cart-item-image"
+                            src="${item.image}"
+                            alt="${item.name}"
+                        >
+
+
+                        <div class="cart-item-info">
+
+
+                            <div class="cart-category">
+                                Jewellery
+                            </div>
+
+
+                            <h3>
+                                ${item.name}
+                            </h3>
+
+
+                            <div class="cart-item-price">
+                                ₹${item.price.toLocaleString("en-IN")}
+                            </div>
+
+
+                            <div class="quantity-controls">
+
+
+                                <button
+                                    onclick="decreaseQuantity(${index})"
+                                    aria-label="Decrease quantity"
+                                >
+                                    −
+                                </button>
+
+
+                                <span>
+                                    ${quantity}
+                                </span>
+
+
+                                <button
+                                    onclick="increaseQuantity(${index})"
+                                    aria-label="Increase quantity"
+                                >
+                                    +
+                                </button>
+
+
+                            </div>
+
+
+                        </div>
+
+
+                        <div class="cart-item-total">
+
+
+                            <strong>
+                                ₹${itemTotal.toLocaleString("en-IN")}
+                            </strong>
+
+
+                            <button
+                                class="remove-btn"
+                                onclick="removeItem(${index})"
+                            >
+                                Remove
+                            </button>
+
+
+                        </div>
+
+
+                    </div>
+
+                `;
+
+            });
+
+
+            /* COMPLETE CART */
+
+            container.innerHTML = `
+
+                <div class="cart-layout">
+
+
+                    <div class="cart-items">
+
+                        ${itemsHTML}
+
+                    </div>
+
+
+                    <div class="cart-summary">
+
+
+                        <h2>
+                            Order Summary
+                        </h2>
+
+
+                        <div class="summary-row">
+
+                            <span>
+                                Subtotal
+                            </span>
+
+                            <span>
+                                ₹${subtotal.toLocaleString("en-IN")}
+                            </span>
+
+                        </div>
+
+
+                        <div class="summary-row">
+
+                            <span>
+                                Shipping
+                            </span>
+
+                            <span>
+                                FREE
+                            </span>
+
+                        </div>
+
+
+                        <div class="summary-row summary-total">
+
+                            <span>
+                                Total
+                            </span>
+
+                            <span>
+                                ₹${subtotal.toLocaleString("en-IN")}
+                            </span>
+
+                        </div>
+
+
+                        <a
+                            href="checkout.html"
+                            class="checkout-btn"
+                        >
+                            PROCEED TO CHECKOUT
+                        </a>
+
+
+                        <a
+                            href="shop.html"
+                            class="continue-link"
+                        >
+                            ← Continue Shopping
+                        </a>
+
+
+                        <div class="cart-security">
+
+                            🔒 Secure checkout
+                            <br>
+                            Your jewellery order information
+                            is securely processed.
+
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+            `;
+
+        }
+
+
+
+        /* ================= INCREASE ================= */
+
+        function increaseQuantity(index) {
+
+            cart[index].quantity =
+                (cart[index].quantity || 1) + 1;
+
+            saveCart();
+
+        }
+
+
+
+        /* ================= DECREASE ================= */
+
+        function decreaseQuantity(index) {
+
+            if (
+                (cart[index].quantity || 1) > 1
+            ) {
+
+                cart[index].quantity--;
+
+            }
+
+            saveCart();
+
+        }
+
+
+
+        /* ================= REMOVE ================= */
+
+        function removeItem(index) {
+
+            cart.splice(index, 1);
+
+            saveCart();
+
+        }
+
+
+
+        /* ================= SAVE ================= */
+
+        function saveCart() {
+
+            localStorage.setItem(
+                "cart",
+                JSON.stringify(cart)
+            );
+
+            renderCart();
+
+        }
+
+
+
+        /* ================= CART COUNT ================= */
+
+        function updateCartCount() {
+
+            const count =
+                cart.reduce(
+                    (total, item) =>
+                        total + (item.quantity || 1),
+                    0
+                );
+
+
+            const cartCount =
+                document.getElementById(
+                    "cart-count"
+                );
+
+
+            if (cartCount) {
+
+                cartCount.textContent =
+                    count;
+
+            }
+
+        }
+
+
+
+        /* ================= START ================= */
+
+        renderCart();
+
+    </script>
+
+
+</body>
+
+</html>

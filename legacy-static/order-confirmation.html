@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Order Confirmed | Tirupati Jewellers</title>
+
+    <link rel="stylesheet" href="css/style.css">
+
+    <style>
+        .confirmation-page {
+            min-height: 80vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 140px 20px 80px;
+        }
+
+        .confirmation-box {
+            width: min(700px, 100%);
+            background: white;
+            padding: 60px 45px;
+            text-align: center;
+            border: 1px solid #e5dfd4;
+        }
+
+        .success-icon {
+            width: 75px;
+            height: 75px;
+            margin: 0 auto 30px;
+            border-radius: 50%;
+            background: #b89552;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 35px;
+        }
+
+        .confirmation-box .eyebrow {
+            color: #8d6d32;
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            letter-spacing: 3px;
+            margin-bottom: 15px;
+        }
+
+        .confirmation-box h1 {
+            font-size: clamp(38px, 6vw, 58px);
+            font-weight: 400;
+            line-height: 1.1;
+            margin-bottom: 20px;
+        }
+
+        .confirmation-box > p {
+            font-family: Arial, sans-serif;
+            color: #777;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .order-id-box {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f5ef;
+        }
+
+        .order-id-box span {
+            display: block;
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: #8d6d32;
+            margin-bottom: 8px;
+        }
+
+        .order-id-box strong {
+            font-family: Arial, sans-serif;
+            font-size: 20px;
+            letter-spacing: 1px;
+        }
+
+        .confirmation-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 35px;
+            flex-wrap: wrap;
+        }
+
+        .confirmation-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 50px;
+            padding: 0 28px;
+            background: #111;
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: 0.3s ease;
+        }
+
+        .confirmation-btn:hover {
+            background: #b89552;
+        }
+
+        .confirmation-btn.secondary {
+            background: transparent;
+            color: #111;
+            border: 1px solid #111;
+        }
+
+        .confirmation-btn.secondary:hover {
+            background: #111;
+            color: white;
+        }
+
+        @media (max-width: 600px) {
+
+            .confirmation-box {
+                padding: 45px 22px;
+            }
+
+            .confirmation-actions {
+                flex-direction: column;
+            }
+
+            .confirmation-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <header class="header">
+
+        <div class="container navbar">
+
+            <a href="index.html" class="logo">
+                <span class="logo-main">TIRUPATI</span>
+                <span class="logo-sub">JEWELLERS</span>
+            </a>
+
+            <nav class="nav-links">
+
+                <a href="index.html">Home</a>
+
+                <a href="shop.html">Shop</a>
+
+                <a href="index.html#collections">
+                    Collections
+                </a>
+
+                <a href="index.html#about">
+                    About
+                </a>
+
+                <a href="index.html#contact">
+                    Contact
+                </a>
+
+            </nav>
+
+            <div class="nav-actions">
+
+                <a href="cart.html">
+                    🛒
+                </a>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <!-- CONFIRMATION -->
+    <main class="confirmation-page">
+
+        <div class="confirmation-box">
+
+            <div class="success-icon">
+                ✓
+            </div>
+
+            <p class="eyebrow">
+                ORDER CONFIRMED
+            </p>
+
+            <h1>
+                Thank you for your order.
+            </h1>
+
+            <p>
+                Your order has been successfully placed.
+                We appreciate you choosing Tirupati Jewellers.
+            </p>
+
+
+            <div class="order-id-box">
+
+                <span>
+                    YOUR ORDER NUMBER
+                </span>
+
+                <strong id="orderId">
+                    —
+                </strong>
+
+            </div>
+
+
+            <p id="orderMessage">
+                Your order details have been saved successfully.
+            </p>
+
+
+            <div class="confirmation-actions">
+
+                <a
+                    href="shop.html"
+                    class="confirmation-btn"
+                >
+                    CONTINUE SHOPPING
+                </a>
+
+                <a
+                    href="index.html"
+                    class="confirmation-btn secondary"
+                >
+                    BACK TO HOME
+                </a>
+
+            </div>
+
+        </div>
+
+    </main>
+
+
+    <script>
+
+        const latestOrder =
+            JSON.parse(
+                localStorage.getItem("latestOrder") || "null"
+            );
+
+
+        const orderId =
+            document.getElementById("orderId");
+
+
+        const orderMessage =
+            document.getElementById("orderMessage");
+
+
+        if (latestOrder) {
+
+            orderId.textContent =
+                latestOrder.orderId;
+
+            orderMessage.textContent =
+                `Order total: ₹${Number(
+                    latestOrder.total
+                ).toLocaleString("en-IN")}. We will process your order shortly.`;
+
+        } else {
+
+            orderId.textContent =
+                "ORDER DETAILS UNAVAILABLE";
+
+            orderMessage.textContent =
+                "Your order confirmation details could not be found.";
+
+        }
+
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Admin Orders | Tirupati Jewellers</title>
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
+    <style>
+
+        body {
+            background: #f7f3ed;
+        }
+
+        .admin-page {
+            max-width: 1250px;
+            margin: 60px auto;
+            padding: 0 25px;
+        }
+
+
+        /* =========================
+           HEADER
+        ========================= */
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .admin-header p {
+            color: #a47b32;
+            letter-spacing: 3px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .admin-header h1 {
+            font-size: 42px;
+            margin: 8px 0;
+        }
+
+
+        /* =========================
+           ADMIN BUTTONS
+        ========================= */
+
+        .admin-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .admin-actions button {
+            padding: 13px 22px;
+            border: none;
+            background: #171717;
+            color: white;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .admin-actions button:hover {
+            background: #a47b32;
+        }
+
+        .products-btn {
+            background: #a47b32 !important;
+        }
+
+        .products-btn:hover {
+            background: #171717 !important;
+        }
+
+        .logout-btn {
+            background: #8b6729 !important;
+        }
+
+        .logout-btn:hover {
+            background: #171717 !important;
+        }
+
+
+        /* =========================
+           STATISTICS
+        ========================= */
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 35px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid #e5dfd5;
+            padding: 25px;
+        }
+
+        .stat-card span {
+            display: block;
+            color: #777;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .stat-card strong {
+            font-size: 28px;
+        }
+
+
+        /* =========================
+           ORDERS
+        ========================= */
+
+        .orders-box {
+            background: white;
+            border: 1px solid #e5dfd5;
+            padding: 30px;
+        }
+
+        .orders-box h2 {
+            margin-top: 0;
+            margin-bottom: 25px;
+        }
+
+        .order-card {
+            border: 1px solid #e5dfd5;
+            margin-bottom: 18px;
+            padding: 22px;
+            background: #fff;
+        }
+
+        .order-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 18px;
+        }
+
+        .order-id {
+            font-weight: bold;
+            font-size: 17px;
+        }
+
+        .order-date {
+            color: #777;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+
+        .status {
+            padding: 7px 12px;
+            background: #f5f0e8;
+            color: #8b6729;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+
+        /* =========================
+           CUSTOMER INFORMATION
+        ========================= */
+
+        .order-info {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            padding: 18px 0;
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+        }
+
+        .info span {
+            display: block;
+            color: #777;
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+
+        .info strong {
+            font-size: 14px;
+        }
+
+
+        /* =========================
+           PRODUCTS
+        ========================= */
+
+        .order-products {
+            margin-top: 18px;
+        }
+
+        .product-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f1f1;
+        }
+
+        .product-row:last-child {
+            border-bottom: none;
+        }
+
+
+        /* =========================
+           ORDER BOTTOM
+        ========================= */
+
+        .order-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 18px;
+            gap: 20px;
+        }
+
+        .order-total {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .status-select {
+            padding: 9px 12px;
+            border: 1px solid #d8d0c5;
+            background: white;
+            cursor: pointer;
+        }
+
+        .delete-btn {
+            margin-left: 10px;
+            padding: 9px 15px;
+            border: none;
+            background: #171717;
+            color: white;
+            cursor: pointer;
+        }
+
+        .delete-btn:hover {
+            background: #a33;
+        }
+
+
+        /* =========================
+           EMPTY
+        ========================= */
+
+        .empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: #777;
+        }
+
+
+        /* =========================
+           MOBILE
+        ========================= */
+
+        @media (max-width: 800px) {
+
+            .admin-page {
+                margin-top: 30px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .order-info {
+                grid-template-columns: 1fr;
+            }
+
+            .order-top,
+            .order-bottom {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .admin-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 20px;
+            }
+
+            .admin-actions {
+                width: 100%;
+            }
+
+            .admin-actions button {
+                flex: 1;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- =====================================================
+     ADMIN LOGIN PROTECTION
+====================================================== -->
+
+<script>
+
+    if (
+        sessionStorage.getItem("adminLoggedIn") !== "true"
+    ) {
+
+        window.location.href =
+            "admin-login.html";
+
+    }
+
+</script>
+
+
+<main class="admin-page">
+
+
+    <!-- =================================================
+         HEADER
+    ================================================== -->
+
+    <div class="admin-header">
+
+
+        <div>
+
+            <p>
+                TIRUPATI JEWELLERS
+            </p>
+
+            <h1>
+                Orders
+            </h1>
+
+        </div>
+
+
+        <div class="admin-actions">
+
+
+            <!-- WEBSITE -->
+
+            <button
+                onclick="location.href='index.html'"
+            >
+                VIEW WEBSITE
+            </button>
+
+
+            <!-- PRODUCTS -->
+
+            <button
+                class="products-btn"
+                onclick="location.href='admin-products.html'"
+            >
+                PRODUCTS
+            </button>
+
+
+            <!-- LOGOUT -->
+
+            <button
+                class="logout-btn"
+                onclick="logoutAdmin()"
+            >
+                LOGOUT
+            </button>
+
+
+        </div>
+
+
+    </div>
+
+
+    <!-- =================================================
+         STATISTICS
+    ================================================== -->
+
+    <div class="stats">
+
+
+        <div class="stat-card">
+
+            <span>
+                TOTAL ORDERS
+            </span>
+
+            <strong id="totalOrders">
+                0
+            </strong>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <span>
+                TOTAL SALES
+            </span>
+
+            <strong id="totalSales">
+                ₹0
+            </strong>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <span>
+                PENDING ORDERS
+            </span>
+
+            <strong id="pendingOrders">
+                0
+            </strong>
+
+        </div>
+
+
+    </div>
+
+
+    <!-- =================================================
+         ORDERS
+    ================================================== -->
+
+    <div class="orders-box">
+
+
+        <h2>
+            Customer Orders
+        </h2>
+
+
+        <div id="ordersList"></div>
+
+
+    </div>
+
+
+</main>
+
+
+<script>
+
+
+    /* =================================================
+       GET ORDERS
+    ================================================= */
+
+    let orders = JSON.parse(
+        localStorage.getItem("orders") || "[]"
+    );
+
+
+    const ordersList =
+        document.getElementById("ordersList");
+
+
+    /* =================================================
+       RENDER ORDERS
+    ================================================= */
+
+    function renderOrders() {
+
+
+        ordersList.innerHTML = "";
+
+
+        /* TOTAL ORDERS */
+
+        document.getElementById(
+            "totalOrders"
+        ).textContent =
+            orders.length;
+
+
+        /* TOTAL SALES */
+
+        const sales =
+            orders.reduce(
+                (sum, order) => {
+
+                    return sum +
+                        Number(
+                            order.total || 0
+                        );
+
+                },
+                0
+            );
+
+
+        document.getElementById(
+            "totalSales"
+        ).textContent =
+            "₹" +
+            sales.toLocaleString("en-IN");
+
+
+        /* PENDING ORDERS */
+
+        const pending =
+            orders.filter(
+                order =>
+                    order.status !== "Delivered" &&
+                    order.status !== "Cancelled"
+            ).length;
+
+
+        document.getElementById(
+            "pendingOrders"
+        ).textContent =
+            pending;
+
+
+        /* EMPTY */
+
+        if (
+            orders.length === 0
+        ) {
+
+            ordersList.innerHTML = `
+
+                <div class="empty">
+
+                    <h3>
+                        No orders yet
+                    </h3>
+
+                    <p>
+                        Customer orders will appear here.
+                    </p>
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        /* =================================================
+           NEWEST ORDER FIRST
+        ================================================== */
+
+        [...orders]
+            .reverse()
+            .forEach(
+                (
+                    order,
+                    reverseIndex
+                ) => {
+
+
+                    const originalIndex =
+                        orders.length -
+                        1 -
+                        reverseIndex;
+
+
+                    const customer =
+                        order.customer || {};
+
+
+                    const date =
+                        new Date(
+                            order.date
+                        );
+
+
+                    let productsHTML =
+                        "";
+
+
+                    /* PRODUCTS */
+
+                    (
+                        order.items || []
+                    ).forEach(
+                        item => {
+
+
+                            const quantity =
+                                item.quantity || 1;
+
+
+                            const price =
+                                Number(
+                                    item.price || 0
+                                ) *
+                                quantity;
+
+
+                            productsHTML += `
+
+                                <div class="product-row">
+
+                                    <span>
+
+                                        ${item.name}
+                                        × ${quantity}
+
+                                    </span>
+
+
+                                    <strong>
+
+                                        ₹${price.toLocaleString("en-IN")}
+
+                                    </strong>
+
+                                </div>
+
+                            `;
+
+                        }
+                    );
+
+
+                    /* ORDER CARD */
+
+                    ordersList.innerHTML += `
+
+                        <div class="order-card">
+
+
+                            <!-- TOP -->
+
+                            <div class="order-top">
+
+
+                                <div>
+
+                                    <div class="order-id">
+
+                                        ${order.orderId}
+
+                                    </div>
+
+
+                                    <div class="order-date">
+
+                                        ${date.toLocaleString("en-IN")}
+
+                                    </div>
+
+                                </div>
+
+
+                                <span class="status">
+
+                                    ${order.status}
+
+                                </span>
+
+
+                            </div>
+
+
+                            <!-- CUSTOMER INFO -->
+
+                            <div class="order-info">
+
+
+                                <div class="info">
+
+                                    <span>
+                                        CUSTOMER
+                                    </span>
+
+                                    <strong>
+
+                                        ${customer.name || "-"}
+
+                                    </strong>
+
+                                </div>
+
+
+                                <div class="info">
+
+                                    <span>
+                                        PHONE
+                                    </span>
+
+                                    <strong>
+
+                                        ${customer.phone || "-"}
+
+                                    </strong>
+
+                                </div>
+
+
+                                <div class="info">
+
+                                    <span>
+                                        PAYMENT
+                                    </span>
+
+                                    <strong>
+
+                                        ${
+                                            customer.payment === "cod"
+                                                ? "Cash on Delivery"
+                                                : "Online Payment"
+                                        }
+
+                                    </strong>
+
+                                </div>
+
+
+                            </div>
+
+
+                            <!-- PRODUCTS -->
+
+                            <div class="order-products">
+
+
+                                <strong>
+                                    PRODUCTS
+                                </strong>
+
+
+                                ${productsHTML}
+
+
+                            </div>
+
+
+                            <!-- BOTTOM -->
+
+                            <div class="order-bottom">
+
+
+                                <div class="order-total">
+
+                                    ₹${Number(
+                                        order.total || 0
+                                    ).toLocaleString("en-IN")}
+
+                                </div>
+
+
+                                <div>
+
+
+                                    <!-- STATUS -->
+
+                                    <select
+                                        class="status-select"
+                                        onchange="
+                                            updateStatus(
+                                                ${originalIndex},
+                                                this.value
+                                            )
+                                        "
+                                    >
+
+
+                                        <option
+                                            value="Order Placed"
+                                            ${
+                                                order.status ===
+                                                "Order Placed"
+                                                    ? "selected"
+                                                    : ""
+                                            }
+                                        >
+                                            Order Placed
+                                        </option>
+
+
+                                        <option
+                                            value="Processing"
+                                            ${
+                                                order.status ===
+                                                "Processing"
+                                                    ? "selected"
+                                                    : ""
+                                            }
+                                        >
+                                            Processing
+                                        </option>
+
+
+                                        <option
+                                            value="Shipped"
+                                            ${
+                                                order.status ===
+                                                "Shipped"
+                                                    ? "selected"
+                                                    : ""
+                                            }
+                                        >
+                                            Shipped
+                                        </option>
+
+
+                                        <option
+                                            value="Delivered"
+                                            ${
+                                                order.status ===
+                                                "Delivered"
+                                                    ? "selected"
+                                                    : ""
+                                            }
+                                        >
+                                            Delivered
+                                        </option>
+
+
+                                        <option
+                                            value="Cancelled"
+                                            ${
+                                                order.status ===
+                                                "Cancelled"
+                                                    ? "selected"
+                                                    : ""
+                                            }
+                                        >
+                                            Cancelled
+                                        </option>
+
+
+                                    </select>
+
+
+                                    <!-- DELETE -->
+
+                                    <button
+                                        class="delete-btn"
+                                        onclick="
+                                            deleteOrder(
+                                                ${originalIndex}
+                                            )
+                                        "
+                                    >
+                                        DELETE
+                                    </button>
+
+
+                                </div>
+
+
+                            </div>
+
+
+                        </div>
+
+                    `;
+
+                }
+            );
+
+    }
+
+
+    /* =================================================
+       UPDATE STATUS
+    ================================================== */
+
+    function updateStatus(
+        index,
+        status
+    ) {
+
+
+        if (
+            !orders[index]
+        ) {
+
+            return;
+
+        }
+
+
+        orders[index].status =
+            status;
+
+
+        localStorage.setItem(
+            "orders",
+            JSON.stringify(orders)
+        );
+
+
+        renderOrders();
+
+    }
+
+
+    /* =================================================
+       DELETE ORDER
+    ================================================== */
+
+    function deleteOrder(
+        index
+    ) {
+
+
+        if (
+            !orders[index]
+        ) {
+
+            return;
+
+        }
+
+
+        const confirmDelete =
+            confirm(
+                "Are you sure you want to delete this order?"
+            );
+
+
+        if (
+            !confirmDelete
+        ) {
+
+            return;
+
+        }
+
+
+        orders.splice(
+            index,
+            1
+        );
+
+
+        localStorage.setItem(
+            "orders",
+            JSON.stringify(orders)
+        );
+
+
+        renderOrders();
+
+    }
+
+
+    /* =================================================
+       LOGOUT
+    ================================================== */
+
+    function logoutAdmin() {
+
+
+        sessionStorage.removeItem(
+            "adminLoggedIn"
+        );
+
+
+        window.location.href =
+            "admin-login.html";
+
+    }
+
+
+    /* =================================================
+       INITIAL LOAD
+    ================================================== */
+
+    renderOrders();
+
+
+</script>
+
+
+</body>
+
+</html>

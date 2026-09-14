@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Shop | Tirupati Jewellers</title>
+
+    <meta
+        name="description"
+        content="Explore the timeless jewellery collection at Tirupati Jewellers."
+    >
+
+    <link rel="stylesheet" href="css/style.css">
+
+    <style>
+        /* =====================================================
+           SHOP PAGE
+           ===================================================== */
+
+        .shop-page {
+            padding: 150px 0 100px;
+            background: var(--cream);
+            min-height: 100vh;
+        }
+
+        .shop-header {
+            max-width: 760px;
+            margin-bottom: 45px;
+        }
+
+        .shop-header h1 {
+            font-size: clamp(48px, 7vw, 78px);
+            font-weight: 400;
+            line-height: 1;
+            color: var(--black);
+            margin-bottom: 25px;
+        }
+
+        .shop-header h1 span {
+            color: var(--gold-dark);
+            font-style: italic;
+        }
+
+        .shop-header p:not(.eyebrow) {
+            font-family: Arial, Helvetica, sans-serif;
+            color: var(--text-light);
+            max-width: 600px;
+            font-size: 14px;
+        }
+
+        /* FILTERS */
+
+        .shop-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 25px;
+            margin-bottom: 45px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .shop-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .filter-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 42px;
+            padding: 0 20px;
+            border: 1px solid var(--border);
+            background: white;
+            color: var(--text);
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: 0.3s ease;
+        }
+
+        .filter-btn:hover {
+            background: var(--gold);
+            border-color: var(--gold);
+            color: white;
+        }
+
+        .shop-note {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11px;
+            color: var(--text-light);
+            white-space: nowrap;
+        }
+
+        /* PRODUCTS */
+
+        #product-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 45px 28px;
+        }
+
+        #product-grid .product-card {
+            background: white;
+            overflow: hidden;
+            transition: 0.4s ease;
+        }
+
+        #product-grid .product-card:hover {
+            transform: translateY(-7px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.10);
+        }
+
+        #product-grid .product-image {
+            display: block;
+            position: relative;
+            height: 480px;
+            overflow: hidden;
+            background: #f1eee8;
+        }
+
+        #product-grid .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+        }
+
+        #product-grid .product-card:hover
+        .product-image img {
+            transform: scale(1.05);
+        }
+
+        #product-grid .product-badge {
+            position: absolute;
+            top: 18px;
+            left: 18px;
+            padding: 8px 11px;
+            background: white;
+            color: var(--gold-dark);
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 9px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+        }
+
+        #product-grid .product-info {
+            padding: 24px;
+        }
+
+        #product-grid .product-category {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 9px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--gold-dark);
+            margin-bottom: 6px;
+        }
+
+        #product-grid .product-info h3 {
+            font-size: 25px;
+            font-weight: 400;
+            color: var(--black);
+            margin-bottom: 8px;
+        }
+
+        #product-grid .product-price {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 15px;
+            color: var(--text);
+            margin-bottom: 20px;
+        }
+
+        #product-grid .add-to-cart {
+            width: 100%;
+            min-height: 48px;
+            border: 1px solid var(--black);
+            background: var(--black);
+            color: white;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            transition: 0.3s ease;
+        }
+
+        #product-grid .add-to-cart:hover {
+            background: var(--gold);
+            border-color: var(--gold);
+        }
+
+        .no-products {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 80px 20px;
+            background: white;
+            font-family: Arial, Helvetica, sans-serif;
+            color: var(--text-light);
+        }
+
+        /* FOOTER */
+
+        .shop-footer {
+            background: var(--black);
+            color: white;
+            padding: 25px 0;
+            text-align: center;
+        }
+
+        .shop-footer p {
+            font-family: Arial, Helvetica, sans-serif;
+            color: #888;
+            font-size: 11px;
+        }
+
+        /* MOBILE */
+
+        @media (max-width: 900px) {
+
+            #product-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            #product-grid .product-image {
+                height: 430px;
+            }
+
+            .shop-toolbar {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .shop-note {
+                white-space: normal;
+            }
+        }
+
+        @media (max-width: 650px) {
+
+            .shop-page {
+                padding: 115px 0 70px;
+            }
+
+            .shop-header h1 {
+                font-size: 48px;
+            }
+
+            #product-grid {
+                grid-template-columns: 1fr;
+                gap: 35px;
+            }
+
+            #product-grid .product-image {
+                height: 430px;
+            }
+
+            .shop-filters {
+                width: 100%;
+            }
+
+            .filter-btn {
+                flex: 1;
+                min-width: 110px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ================= HEADER ================= -->
+
+    <header class="header">
+
+        <div class="container navbar">
+
+            <a href="index.html" class="logo">
+
+                <span class="logo-main">
+                    TIRUPATI
+                </span>
+
+                <span class="logo-sub">
+                    JEWELLERS
+                </span>
+
+            </a>
+
+
+            <nav class="nav-links">
+
+                <a href="index.html">
+                    Home
+                </a>
+
+                <a href="shop.html" class="active">
+                    Shop
+                </a>
+
+                <a href="index.html#collections">
+                    Collections
+                </a>
+
+                <a href="index.html#about">
+                    About
+                </a>
+
+                <a href="index.html#contact">
+                    Contact
+                </a>
+
+            </nav>
+
+
+            <div class="nav-actions">
+
+                <a
+                    href="cart.html"
+                    class="cart-button"
+                    aria-label="Shopping Cart"
+                >
+                    🛒
+
+                    <span id="cart-count">
+                        0
+                    </span>
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <!-- ================= SHOP ================= -->
+
+    <main class="shop-page">
+
+        <div class="container">
+
+            <!-- SHOP INTRO -->
+
+            <div class="shop-header">
+
+                <p class="eyebrow">
+                    THE COLLECTION
+                </p>
+
+                <h1>
+                    Discover something
+                    <span>unforgettable.</span>
+                </h1>
+
+                <p>
+                    Explore our carefully curated collection of
+                    timeless jewellery, thoughtfully designed for
+                    celebrations, special moments and everyday elegance.
+                </p>
+
+            </div>
+
+
+            <!-- SHOP FILTERS -->
+
+            <div class="shop-toolbar">
+
+                <div class="shop-filters">
+
+                    <a
+                        href="shop.html"
+                        class="filter-btn"
+                    >
+                        All Jewellery
+                    </a>
+
+                    <a
+                        href="shop.html?category=necklaces"
+                        class="filter-btn"
+                    >
+                        Necklaces
+                    </a>
+
+                    <a
+                        href="shop.html?category=rings"
+                        class="filter-btn"
+                    >
+                        Rings
+                    </a>
+
+                    <a
+                        href="shop.html?category=earrings"
+                        class="filter-btn"
+                    >
+                        Earrings
+                    </a>
+
+                    <a
+                        href="shop.html?category=bracelets"
+                        class="filter-btn"
+                    >
+                        Bracelets
+                    </a>
+
+                </div>
+
+
+                <p class="shop-note">
+                    Handpicked pieces • Timeless elegance
+                </p>
+
+            </div>
+
+
+            <!-- PRODUCTS -->
+
+            <div id="product-grid">
+
+                <!-- Products are loaded automatically
+                     by js/product.js -->
+
+            </div>
+
+        </div>
+
+    </main>
+
+
+    <!-- ================= FOOTER ================= -->
+
+    <footer class="shop-footer">
+
+        <div class="container">
+
+            <p>
+                © 2026 Tirupati Jewellers.
+                All rights reserved.
+            </p>
+
+        </div>
+
+    </footer>
+
+
+    <!-- ================= JAVASCRIPT ================= -->
+
+    <script src="js/product.js?v=20260815"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/script.js"></script>
+
+</body>
+</html>

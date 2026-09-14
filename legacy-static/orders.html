@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>My Orders | Tirupati Jewellers</title>
+
+    <link rel="stylesheet" href="css/style.css">
+
+    <style>
+        .orders-page {
+            max-width: 1100px;
+            margin: 140px auto 80px;
+            padding: 0 30px;
+        }
+
+        .orders-heading {
+            margin-bottom: 45px;
+        }
+
+        .orders-heading .eyebrow {
+            color: #8d6d32;
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            letter-spacing: 3px;
+            margin-bottom: 12px;
+        }
+
+        .orders-heading h1 {
+            font-size: clamp(40px, 6vw, 60px);
+            font-weight: 400;
+            line-height: 1.1;
+            margin: 0 0 15px;
+        }
+
+        .orders-heading p {
+            font-family: Arial, sans-serif;
+            color: #777;
+            font-size: 14px;
+        }
+
+        .order-card {
+            background: white;
+            border: 1px solid #e5dfd4;
+            margin-bottom: 25px;
+        }
+
+        .order-header {
+            padding: 22px 25px;
+            background: #f8f5ef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid #e5dfd4;
+        }
+
+        .order-number {
+            font-family: Arial, sans-serif;
+        }
+
+        .order-number span {
+            display: block;
+            color: #8d6d32;
+            font-size: 9px;
+            letter-spacing: 2px;
+            margin-bottom: 6px;
+        }
+
+        .order-number strong {
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        .order-status {
+            padding: 8px 14px;
+            border: 1px solid #b89552;
+            color: #8d6d32;
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .order-body {
+            padding: 25px;
+        }
+
+        .order-date {
+            font-family: Arial, sans-serif;
+            color: #777;
+            font-size: 12px;
+            margin-bottom: 20px;
+        }
+
+        .order-product {
+            display: grid;
+            grid-template-columns: 80px 1fr auto;
+            gap: 18px;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .order-product:last-child {
+            border-bottom: none;
+        }
+
+        .order-product img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            background: #f4efe8;
+        }
+
+        .order-product-info h3 {
+            font-size: 18px;
+            font-weight: 400;
+            margin: 0 0 6px;
+        }
+
+        .order-product-info p {
+            font-family: Arial, sans-serif;
+            color: #777;
+            font-size: 12px;
+            margin: 0;
+        }
+
+        .order-product-price {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            text-align: right;
+        }
+
+        .order-footer {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .order-total-label {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            color: #777;
+        }
+
+        .order-total {
+            font-family: Arial, sans-serif;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .empty-orders {
+            background: white;
+            border: 1px solid #e5dfd4;
+            padding: 90px 30px;
+            text-align: center;
+        }
+
+        .empty-orders h2 {
+            font-size: 32px;
+            font-weight: 400;
+            margin-bottom: 12px;
+        }
+
+        .empty-orders p {
+            font-family: Arial, sans-serif;
+            color: #777;
+        }
+
+        .shop-btn {
+            display: inline-flex;
+            margin-top: 25px;
+            min-height: 50px;
+            padding: 0 28px;
+            align-items: center;
+            justify-content: center;
+            background: #111;
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .shop-btn:hover {
+            background: #b89552;
+        }
+
+        @media (max-width: 650px) {
+
+            .orders-page {
+                margin-top: 100px;
+                padding: 0 15px;
+            }
+
+            .order-body {
+                padding: 18px;
+            }
+
+            .order-product {
+                grid-template-columns: 65px 1fr;
+                gap: 12px;
+            }
+
+            .order-product img {
+                width: 65px;
+                height: 65px;
+            }
+
+            .order-product-price {
+                grid-column: 2;
+                text-align: left;
+            }
+
+            .order-footer {
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <header class="header">
+
+        <div class="container navbar">
+
+            <a href="index.html" class="logo">
+                <span class="logo-main">TIRUPATI</span>
+                <span class="logo-sub">JEWELLERS</span>
+            </a>
+
+            <nav class="nav-links">
+
+                <a href="index.html">Home</a>
+
+                <a href="shop.html">Shop</a>
+
+                <a href="index.html#collections">
+                    Collections
+                </a>
+
+                <a href="index.html#about">
+                    About
+                </a>
+
+                <a href="index.html#contact">
+                    Contact
+                </a>
+
+            </nav>
+
+            <div class="nav-actions">
+
+                <a href="cart.html">
+                    🛒
+                </a>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <!-- ORDERS -->
+    <main class="orders-page">
+
+        <div class="orders-heading">
+
+            <p class="eyebrow">
+                YOUR ACCOUNT
+            </p>
+
+            <h1>
+                My Orders
+            </h1>
+
+            <p>
+                View your previous Tirupati Jewellers orders.
+            </p>
+
+        </div>
+
+
+        <div id="ordersContainer"></div>
+
+    </main>
+
+
+    <script>
+
+        const ordersContainer =
+            document.getElementById("ordersContainer");
+
+
+        const orders =
+            JSON.parse(
+                localStorage.getItem("orders") || "[]"
+            );
+
+
+        function formatDate(dateString) {
+
+            const date = new Date(dateString);
+
+            return date.toLocaleDateString(
+                "en-IN",
+                {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric"
+                }
+            );
+
+        }
+
+
+        function renderOrders() {
+
+            if (orders.length === 0) {
+
+                ordersContainer.innerHTML = `
+
+                    <div class="empty-orders">
+
+                        <h2>
+                            No orders yet
+                        </h2>
+
+                        <p>
+                            Your purchased jewellery will
+                            appear here.
+                        </p>
+
+                        <a
+                            href="shop.html"
+                            class="shop-btn"
+                        >
+                            START SHOPPING
+                        </a>
+
+                    </div>
+
+                `;
+
+                return;
+
+            }
+
+
+            /*
+                Show newest order first
+            */
+
+            const sortedOrders =
+                [...orders].reverse();
+
+
+            ordersContainer.innerHTML =
+                sortedOrders.map(order => {
+
+                    const itemsHTML =
+                        (order.items || [])
+                        .map(item => {
+
+                            const quantity =
+                                item.quantity || 1;
+
+                            const itemTotal =
+                                Number(item.price) *
+                                quantity;
+
+                            return `
+
+                                <div class="order-product">
+
+                                    <img
+                                        src="${item.image}"
+                                        alt="${item.name}"
+                                    >
+
+                                    <div class="order-product-info">
+
+                                        <h3>
+                                            ${item.name}
+                                        </h3>
+
+                                        <p>
+                                            Quantity:
+                                            ${quantity}
+                                        </p>
+
+                                    </div>
+
+                                    <div class="order-product-price">
+
+                                        ₹${itemTotal.toLocaleString("en-IN")}
+
+                                    </div>
+
+                                </div>
+
+                            `;
+
+                        })
+                        .join("");
+
+
+                    return `
+
+                        <div class="order-card">
+
+                            <div class="order-header">
+
+                                <div class="order-number">
+
+                                    <span>
+                                        ORDER NUMBER
+                                    </span>
+
+                                    <strong>
+                                        ${order.orderId}
+                                    </strong>
+
+                                </div>
+
+
+                                <div class="order-status">
+
+                                    ${order.status || "Order Placed"}
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="order-body">
+
+                                <div class="order-date">
+
+                                    Ordered on
+                                    ${formatDate(order.date)}
+
+                                </div>
+
+
+                                ${itemsHTML}
+
+
+                                <div class="order-footer">
+
+                                    <span class="order-total-label">
+                                        ORDER TOTAL
+                                    </span>
+
+                                    <span class="order-total">
+                                        ₹${Number(
+                                            order.total
+                                        ).toLocaleString("en-IN")}
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    `;
+
+                })
+                .join("");
+
+        }
+
+
+        renderOrders();
+
+    </script>
+
+</body>
+
+</html>

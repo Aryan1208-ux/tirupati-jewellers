@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Admin Products | Tirupati Jewellers</title>
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
+    <style>
+
+        body {
+            background: #f7f3ed;
+        }
+
+        .admin-page {
+            max-width: 1250px;
+            margin: 60px auto;
+            padding: 0 25px;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .admin-header p {
+            color: #a47b32;
+            letter-spacing: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .admin-header h1 {
+            font-size: 42px;
+            margin: 8px 0;
+        }
+
+        .admin-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .admin-actions button {
+            padding: 13px 22px;
+            border: none;
+            background: #171717;
+            color: white;
+            cursor: pointer;
+        }
+
+        .admin-actions button:hover {
+            background: #8b6729;
+        }
+
+        .logout-btn {
+            background: #8b6729 !important;
+        }
+
+        .product-form-box,
+        .products-box {
+            background: white;
+            border: 1px solid #e5dfd5;
+            padding: 30px;
+        }
+
+        .product-form-box {
+            margin-bottom: 35px;
+        }
+
+        .product-form-box h2,
+        .products-box h2 {
+            margin-bottom: 25px;
+            font-weight: 400;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group select {
+            height: 48px;
+            padding: 0 14px;
+            border: 1px solid #d8d0c5;
+            background: white;
+            outline: none;
+            font-family: Arial, sans-serif;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #a47b32;
+        }
+
+        .form-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        .save-btn,
+        .cancel-btn {
+            padding: 13px 25px;
+            border: none;
+            cursor: pointer;
+            font-size: 11px;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+
+        .save-btn {
+            background: #171717;
+            color: white;
+        }
+
+        .save-btn:hover {
+            background: #8b6729;
+        }
+
+        .cancel-btn {
+            background: #eee8df;
+            color: #333;
+            display: none;
+        }
+
+        .product-list {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+        }
+
+        .admin-product-card {
+            border: 1px solid #e5dfd5;
+            background: white;
+            overflow: hidden;
+        }
+
+        .admin-product-image {
+            position: relative;
+            height: 280px;
+            background: #f1eee8;
+        }
+
+        .admin-product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .admin-product-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            padding: 7px 10px;
+            background: white;
+            color: #8b6729;
+            font-size: 9px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            z-index: 2;
+        }
+
+        .admin-product-info {
+            padding: 20px;
+        }
+
+        .admin-product-category {
+            color: #a47b32;
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .admin-product-info h3 {
+            margin: 8px 0;
+            font-size: 20px;
+            font-weight: 400;
+        }
+
+        .admin-product-price {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 18px;
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .edit-btn,
+        .delete-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .edit-btn {
+            background: #eee8df;
+            color: #333;
+        }
+
+        .edit-btn:hover {
+            background: #a47b32;
+            color: white;
+        }
+
+        .delete-btn {
+            background: #171717;
+            color: white;
+        }
+
+        .delete-btn:hover {
+            background: #9b2c2c;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: #777;
+            grid-column: 1 / -1;
+        }
+
+        @media (max-width: 900px) {
+
+            .product-list {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+        }
+
+        @media (max-width: 700px) {
+
+            .admin-page {
+                margin: 30px auto;
+            }
+
+            .admin-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 20px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-group.full {
+                grid-column: auto;
+            }
+
+            .product-list {
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<script>
+
+if (
+    sessionStorage.getItem("adminLoggedIn") !== "true"
+) {
+
+    window.location.href = "admin-login.html";
+
+}
+
+</script>
+
+
+<main class="admin-page">
+
+
+    <!-- HEADER -->
+
+    <div class="admin-header">
+
+        <div>
+
+            <p>
+                TIRUPATI JEWELLERS
+            </p>
+
+            <h1>
+                Products
+            </h1>
+
+        </div>
+
+
+        <div class="admin-actions">
+
+            <button
+                onclick="location.href='admin.html'"
+            >
+                ORDERS
+            </button>
+
+
+            <button
+                onclick="location.href='shop.html'"
+            >
+                VIEW SHOP
+            </button>
+
+
+            <button
+                class="logout-btn"
+                onclick="logoutAdmin()"
+            >
+                LOGOUT
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- ADD PRODUCT -->
+
+    <div class="product-form-box">
+
+        <h2 id="formTitle">
+            Add New Product
+        </h2>
+
+
+        <form id="productForm">
+
+            <div class="form-grid">
+
+
+                <div class="form-group">
+
+                    <label>
+                        PRODUCT NAME
+                    </label>
+
+                    <input
+                        type="text"
+                        id="productName"
+                        placeholder="Royal Gold Necklace"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        PRICE
+                    </label>
+
+                    <input
+                        type="number"
+                        id="productPrice"
+                        placeholder="24999"
+                        min="1"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        CATEGORY
+                    </label>
+
+                    <select
+                        id="productCategory"
+                        required
+                    >
+
+                        <option value="">
+                            Select Category
+                        </option>
+
+                        <option value="necklaces">
+                            Necklaces
+                        </option>
+
+                        <option value="rings">
+                            Rings
+                        </option>
+
+                        <option value="earrings">
+                            Earrings
+                        </option>
+
+                        <option value="bracelets">
+                            Bracelets
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        BADGE
+                    </label>
+
+                    <select id="productBadge">
+
+                        <option value="">
+                            No Badge
+                        </option>
+
+                        <option value="NEW">
+                            NEW
+                        </option>
+
+                        <option value="BESTSELLER">
+                            BESTSELLER
+                        </option>
+
+                        <option value="FEATURED">
+                            FEATURED
+                        </option>
+
+                        <option value="POPULAR">
+                            POPULAR
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group full">
+
+                    <label>
+                        PRODUCT IMAGE PATH
+                    </label>
+
+                    <input
+                        type="text"
+                        id="productImage"
+                        placeholder="image/products/product-name.jpg"
+                        required
+                    >
+
+                </div>
+
+
+            </div>
+
+
+            <div class="form-buttons">
+
+                <button
+                    type="submit"
+                    class="save-btn"
+                    id="saveBtn"
+                >
+                    ADD PRODUCT
+                </button>
+
+
+                <button
+                    type="button"
+                    class="cancel-btn"
+                    id="cancelBtn"
+                >
+                    CANCEL
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+
+    <!-- PRODUCTS -->
+
+    <div class="products-box">
+
+        <h2>
+            Your Products
+        </h2>
+
+
+        <div
+            id="productList"
+            class="product-list"
+        ></div>
+
+    </div>
+
+
+</main>
+
+
+<!-- IMPORTANT: SHARED PRODUCT SYSTEM -->
+
+<script src="js/product.js?v=20260815"></script>
+
+
+<script>
+
+"use strict";
+
+
+/* =====================================================
+   ELEMENTS
+   ===================================================== */
+
+const productForm =
+    document.getElementById("productForm");
+
+const productList =
+    document.getElementById("productList");
+
+const formTitle =
+    document.getElementById("formTitle");
+
+const saveBtn =
+    document.getElementById("saveBtn");
+
+const cancelBtn =
+    document.getElementById("cancelBtn");
+
+
+let editingId = null;
+
+
+/* =====================================================
+   RENDER ADMIN PRODUCTS
+   ===================================================== */
+
+function renderAdminProducts() {
+
+    const currentProducts =
+        getProducts();
+
+
+    productList.innerHTML = "";
+
+
+    if (currentProducts.length === 0) {
+
+        productList.innerHTML = `
+
+            <div class="empty">
+
+                <h3>
+                    No products yet
+                </h3>
+
+                <p>
+                    Add your first product above.
+                </p>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    currentProducts.forEach(product => {
+
+        productList.innerHTML += `
+
+            <div class="admin-product-card">
+
+                <div class="admin-product-image">
+
+                    ${
+                        product.badge
+                        ?
+                        `
+                        <span class="admin-product-badge">
+                            ${product.badge}
+                        </span>
+                        `
+                        :
+                        ""
+                    }
+
+                    <img
+                        src="${product.image}"
+                        alt="${product.name}"
+                        onerror="this.style.display='none'"
+                    >
+
+                </div>
+
+
+                <div class="admin-product-info">
+
+                    <span class="admin-product-category">
+                        ${product.category}
+                    </span>
+
+
+                    <h3>
+                        ${product.name}
+                    </h3>
+
+
+                    <p class="admin-product-price">
+                        ₹${Number(product.price)
+                            .toLocaleString("en-IN")}
+                    </p>
+
+
+                    <div class="product-actions">
+
+                        <button
+                            class="edit-btn"
+                            onclick="startEdit(${product.id})"
+                        >
+                            EDIT
+                        </button>
+
+
+                        <button
+                            class="delete-btn"
+                            onclick="removeProduct(${product.id})"
+                        >
+                            DELETE
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        `;
+
+    });
+
+}
+
+
+/* =====================================================
+   ADD / UPDATE
+   ===================================================== */
+
+productForm.addEventListener(
+    "submit",
+    function(event) {
+
+        event.preventDefault();
+
+
+        const name =
+            document
+                .getElementById("productName")
+                .value
+                .trim();
+
+
+        const price =
+            Number(
+                document
+                    .getElementById("productPrice")
+                    .value
+            );
+
+
+        const category =
+            document
+                .getElementById("productCategory")
+                .value;
+
+
+        const badge =
+            document
+                .getElementById("productBadge")
+                .value;
+
+
+        const image =
+            document
+                .getElementById("productImage")
+                .value
+                .trim();
+
+
+        if (
+            !name ||
+            !price ||
+            !category ||
+            !image
+        ) {
+
+            alert(
+                "Please fill all required fields."
+            );
+
+            return;
+
+        }
+
+
+        /* UPDATE */
+
+        if (editingId !== null) {
+
+            const success =
+                updateProduct(
+                    editingId,
+                    {
+                        name,
+                        price,
+                        category,
+                        badge,
+                        image
+                    }
+                );
+
+
+            if (!success) {
+
+                alert(
+                    "Product could not be updated."
+                );
+
+                return;
+
+            }
+
+
+            alert(
+                "Product updated successfully."
+            );
+
+        }
+
+
+        /* ADD */
+
+        else {
+
+            addProduct({
+
+                name,
+                price,
+                category,
+                badge,
+                image
+
+            });
+
+
+            alert(
+                "Product added successfully."
+            );
+
+        }
+
+
+        resetForm();
+
+        renderAdminProducts();
+
+    }
+);
+
+
+/* =====================================================
+   EDIT
+   ===================================================== */
+
+function startEdit(id) {
+
+    const product =
+        getProductById(id);
+
+
+    if (!product) {
+
+        alert(
+            "Product not found."
+        );
+
+        return;
+
+    }
+
+
+    editingId =
+        Number(id);
+
+
+    document.getElementById(
+        "productName"
+    ).value =
+        product.name;
+
+
+    document.getElementById(
+        "productPrice"
+    ).value =
+        product.price;
+
+
+    document.getElementById(
+        "productCategory"
+    ).value =
+        product.category;
+
+
+    document.getElementById(
+        "productBadge"
+    ).value =
+        product.badge || "";
+
+
+    document.getElementById(
+        "productImage"
+    ).value =
+        product.image;
+
+
+    formTitle.textContent =
+        "Edit Product";
+
+
+    saveBtn.textContent =
+        "UPDATE PRODUCT";
+
+
+    cancelBtn.style.display =
+        "inline-block";
+
+
+    window.scrollTo({
+
+        top: 0,
+
+        behavior: "smooth"
+
+    });
+
+}
+
+
+/* =====================================================
+   DELETE
+   ===================================================== */
+
+function removeProduct(id) {
+
+    const product =
+        getProductById(id);
+
+
+    if (!product) {
+
+        return;
+
+    }
+
+
+    const confirmed =
+        confirm(
+            `Delete "${product.name}"?`
+        );
+
+
+    if (!confirmed) {
+
+        return;
+
+    }
+
+
+    const success =
+        deleteProduct(id);
+
+
+    if (!success) {
+
+        alert(
+            "Product could not be deleted."
+        );
+
+        return;
+
+    }
+
+
+    if (
+        Number(editingId) ===
+        Number(id)
+    ) {
+
+        resetForm();
+
+    }
+
+
+    renderAdminProducts();
+
+}
+
+
+/* =====================================================
+   RESET FORM
+   ===================================================== */
+
+function resetForm() {
+
+    editingId = null;
+
+    productForm.reset();
+
+    formTitle.textContent =
+        "Add New Product";
+
+    saveBtn.textContent =
+        "ADD PRODUCT";
+
+    cancelBtn.style.display =
+        "none";
+
+}
+
+
+cancelBtn.addEventListener(
+    "click",
+    resetForm
+);
+
+
+/* =====================================================
+   LOGOUT
+   ===================================================== */
+
+function logoutAdmin() {
+
+    sessionStorage.removeItem(
+        "adminLoggedIn"
+    );
+
+
+    window.location.href =
+        "admin-login.html";
+
+}
+
+
+/* =====================================================
+   INITIAL LOAD
+   ===================================================== */
+
+renderAdminProducts();
+
+
+console.log(
+    "ADMIN PRODUCTS:",
+    getProducts()
+);
+
+console.log(
+    "STORAGE KEY:",
+    "products"
+);
+
+console.log(
+    "TOTAL:",
+    getProducts().length
+);
+
+</script>
+
+
+</body>
+
+</html>

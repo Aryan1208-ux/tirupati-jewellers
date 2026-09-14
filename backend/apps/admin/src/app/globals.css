@@ -1,0 +1,131 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Montserrat:wght@200;300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+/* @theme is a valid Tailwind CSS v4 directive — VS Code CSS linter false positive */
+@theme {
+  --color-gold: #c5a059;
+  --color-gold-light: #e5cf92;
+  --color-gold-dark: #8e6c27;
+  --color-gold-shimmer: #dfc27d;
+  --color-cream: #faf7f2;
+  --color-cream-dark: #f0e9dc;
+  --color-cream-card: #fdfbf7;
+  --color-charcoal: #151515;
+  --color-charcoal-light: #6a6a6a;
+  --color-charcoal-dark: #0a0a0a;
+
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-display: 'Cinzel', serif;
+  --font-sans: 'Montserrat', Arial, sans-serif;
+}
+
+:root {
+  --background: #faf7f2;
+  --foreground: #151515;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-serif);
+  line-height: 1.6;
+  overflow-x: hidden;
+  letter-spacing: 0.01em;
+}
+
+/* Custom Luxury Gradients & Shimmers */
+.gold-gradient-text {
+  background: linear-gradient(135deg, #d4af37 0%, #f3e5ab 50%, #aa7c11 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gold-gradient-bg {
+  background: linear-gradient(135deg, #c5a059 0%, #dfc27d 50%, #8e6c27 100%);
+}
+
+.gold-border-glow:hover {
+  box-shadow: 0 10px 35px -5px rgba(197, 160, 89, 0.25);
+  border-color: #c5a059;
+}
+
+.luxury-card {
+  background: #ffffff;
+  border: 1px solid #eee5d3;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.luxury-card:hover {
+  transform: translateY(-4px);
+  border-color: #c5a059;
+  box-shadow: 0 20px 40px -15px rgba(21, 21, 21, 0.08), 0 0 20px rgba(197, 160, 89, 0.15);
+}
+
+/* Smooth Image Scale on Hover */
+.img-zoom-container {
+  overflow: hidden;
+}
+
+.img-zoom-container img {
+  transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.img-zoom-container:hover img {
+  transform: scale(1.08);
+}
+
+/* ============================================================
+   INVOICE PRINT STYLES
+   Only the #tj-invoice-print container is visible when printing.
+   All navigation, buttons, and admin UI are suppressed.
+   Optimised for A4 paper (210mm × 297mm).
+   ============================================================ */
+@media print {
+  /* Hide everything by default */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Show only the invoice container and its children */
+  #tj-invoice-print,
+  #tj-invoice-print * {
+    visibility: visible;
+  }
+
+  /* Position the invoice at top-left of page */
+  #tj-invoice-print {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    margin: 0;
+    padding: 12mm;
+    background: white !important;
+    color: black !important;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 10pt;
+    box-shadow: none !important;
+  }
+
+  /* A4 page settings */
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  /* Ensure links show as text only */
+  a::after {
+    content: none !important;
+  }
+
+  /* No page breaks inside table rows */
+  tr {
+    page-break-inside: avoid;
+  }
+
+  /* Subtle borders for table printing */
+  table, th, td {
+    border-color: #000 !important;
+  }
+}

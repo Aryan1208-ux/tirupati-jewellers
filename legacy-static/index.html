@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Tirupati Jewellers | Timeless Elegance</title>
+
+    <meta
+        name="description"
+        content="Tirupati Jewellers - Discover timeless gold and diamond jewellery crafted with elegance."
+    >
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
+</head>
+
+
+<body>
+
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <header class="header">
+
+        <div class="container navbar">
+
+            <a
+                href="index.html"
+                class="logo"
+            >
+
+                <span class="logo-main">
+                    TIRUPATI
+                </span>
+
+                <span class="logo-sub">
+                    JEWELLERS
+                </span>
+
+            </a>
+
+
+            <nav class="nav-links">
+
+                <a
+                    href="index.html"
+                    class="active"
+                >
+                    Home
+                </a>
+
+                <a href="shop.html">
+                    Shop
+                </a>
+
+                <a href="#collections">
+                    Collections
+                </a>
+
+                <a href="#about">
+                    About
+                </a>
+
+                <a href="#contact">
+                    Contact
+                </a>
+
+            </nav>
+
+
+            <div class="nav-actions">
+
+                <button
+                    class="icon-button"
+                    type="button"
+                    aria-label="Search"
+                    onclick="openSearch()"
+                >
+                    🔍
+                </button>
+
+
+                <a
+                    href="cart.html"
+                    class="cart-button"
+                    aria-label="Shopping Cart"
+                >
+
+                    🛒
+
+                    <span id="cart-count">
+                        0
+                    </span>
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- =====================================================
+         SEARCH BOX
+    ====================================================== -->
+
+    <div
+        id="searchBox"
+        style="
+            display:none;
+            position:fixed;
+            top:90px;
+            left:0;
+            width:100%;
+            z-index:999;
+            background:#ffffff;
+            padding:20px;
+            box-shadow:0 10px 30px rgba(0,0,0,0.12);
+        "
+    >
+
+        <div
+            style="
+                max-width:700px;
+                margin:auto;
+                display:flex;
+                gap:10px;
+            "
+        >
+
+            <input
+                id="searchInput"
+                type="text"
+                placeholder="Search jewellery..."
+                style="
+                    flex:1;
+                    padding:15px;
+                    border:1px solid #ddd;
+                    font-family:Arial,sans-serif;
+                    outline:none;
+                "
+                onkeydown="handleSearch(event)"
+            >
+
+            <button
+                type="button"
+                onclick="performSearch()"
+                style="
+                    padding:0 25px;
+                    border:none;
+                    background:#111;
+                    color:white;
+                    cursor:pointer;
+                "
+            >
+                SEARCH
+            </button>
+
+            <button
+                type="button"
+                onclick="closeSearch()"
+                style="
+                    padding:0 15px;
+                    border:1px solid #ddd;
+                    background:white;
+                    cursor:pointer;
+                "
+            >
+                ×
+            </button>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =====================================================
+         MAIN CONTENT
+    ====================================================== -->
+
+    <main>
+
+
+        <!-- =================================================
+             HERO
+        ================================================== -->
+
+        <section class="hero">
+
+            <div class="hero-overlay"></div>
+
+
+            <div class="container hero-content">
+
+                <p class="hero-eyebrow">
+                    TIMELESS • ELEGANT • ICONIC
+                </p>
+
+
+                <h1>
+
+                    Jewellery that
+                    <br>
+
+                    <span>
+                        tells your story.
+                    </span>
+
+                </h1>
+
+
+                <p class="hero-text">
+
+                    Discover beautifully crafted jewellery
+                    designed to celebrate your most precious
+                    moments.
+
+                </p>
+
+
+                <div class="hero-buttons">
+
+                    <a
+                        href="shop.html"
+                        class="btn btn-primary"
+                    >
+                        Explore Collection
+                    </a>
+
+
+                    <a
+                        href="#collections"
+                        class="btn btn-outline"
+                    >
+                        Discover More
+                    </a>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             COLLECTIONS
+        ================================================== -->
+
+        <section
+            id="collections"
+            class="section collections"
+        >
+
+            <div class="container">
+
+
+                <div class="section-heading">
+
+                    <p class="eyebrow">
+                        OUR COLLECTIONS
+                    </p>
+
+
+                    <h2>
+                        Crafted for every occasion.
+                    </h2>
+
+
+                    <p>
+
+                        Explore our carefully curated jewellery
+                        collections, created to complement every
+                        celebration.
+
+                    </p>
+
+                </div>
+
+
+
+                <div class="collection-grid">
+
+
+                    <!-- RINGS -->
+
+                    <a
+                        href="shop.html?category=rings"
+                        class="collection-card"
+                    >
+
+                        <div class="collection-image">
+
+                            <img
+                                src="image/rings.jpg"
+                                alt="Ring Collection"
+                            >
+
+                        </div>
+
+
+                        <div class="collection-info">
+
+                            <span>
+                                01
+                            </span>
+
+                            <h3>
+                                Rings
+                            </h3>
+
+                            <p>
+                                Elegant pieces made to shine.
+                            </p>
+
+                            <strong>
+                                Explore →
+                            </strong>
+
+                        </div>
+
+                    </a>
+
+
+
+                    <!-- NECKLACES -->
+
+                    <a
+                        href="shop.html?category=necklaces"
+                        class="collection-card"
+                    >
+
+                        <div class="collection-image">
+
+                            <img
+                                src="image/necklaces.jpg"
+                                alt="Necklace Collection"
+                            >
+
+                        </div>
+
+
+                        <div class="collection-info">
+
+                            <span>
+                                02
+                            </span>
+
+                            <h3>
+                                Necklaces
+                            </h3>
+
+                            <p>
+                                Graceful designs for every occasion.
+                            </p>
+
+                            <strong>
+                                Explore →
+                            </strong>
+
+                        </div>
+
+                    </a>
+
+
+
+                    <!-- EARRINGS -->
+
+                    <a
+                        href="shop.html?category=earrings"
+                        class="collection-card"
+                    >
+
+                        <div class="collection-image">
+
+                            <img
+                                src="image/earrings.jpg"
+                                alt="Earrings Collection"
+                            >
+
+                        </div>
+
+
+                        <div class="collection-info">
+
+                            <span>
+                                03
+                            </span>
+
+                            <h3>
+                                Earrings
+                            </h3>
+
+                            <p>
+                                Details that complete your look.
+                            </p>
+
+                            <strong>
+                                Explore →
+                            </strong>
+
+                        </div>
+
+                    </a>
+
+
+
+                    <!-- BRACELETS -->
+
+                    <a
+                        href="shop.html?category=bracelets"
+                        class="collection-card"
+                    >
+
+                        <div class="collection-image">
+
+                            <img
+                                src="image/bracelets.jpg"
+                                alt="Bracelet Collection"
+                            >
+
+                        </div>
+
+
+                        <div class="collection-info">
+
+                            <span>
+                                04
+                            </span>
+
+                            <h3>
+                                Bracelets
+                            </h3>
+
+                            <p>
+                                Timeless elegance around your wrist.
+                            </p>
+
+                            <strong>
+                                Explore →
+                            </strong>
+
+                        </div>
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             FEATURED PRODUCTS
+        ================================================== -->
+
+        <section class="section featured">
+
+            <div class="container">
+
+
+                <div class="section-heading">
+
+                    <p class="eyebrow">
+                        FEATURED JEWELLERY
+                    </p>
+
+
+                    <h2>
+                        Made to be remembered.
+                    </h2>
+
+
+                    <p>
+
+                        Discover some of our signature pieces,
+                        carefully selected for timeless elegance.
+
+                    </p>
+
+                </div>
+
+
+
+                <div
+                    id="featuredProducts"
+                    class="product-grid"
+                >
+
+
+                    <!-- PRODUCT 1 -->
+
+                    <article class="product-card">
+
+                        <a
+                            href="product.html?id=1"
+                            class="product-image"
+                        >
+
+                            <span class="product-badge">
+                                NEW
+                            </span>
+
+
+                            <img
+                                src="image/products/royal-gold-necklace.jpg"
+                                alt="Royal Gold Necklace"
+                            >
+
+                        </a>
+
+
+                        <div class="product-info">
+
+                            <span class="product-category">
+                                NECKLACES
+                            </span>
+
+
+                            <h3>
+                                Royal Gold Necklace
+                            </h3>
+
+
+                            <p class="price">
+                                ₹24,999
+                            </p>
+
+
+                            <button
+                                type="button"
+                                class="btn btn-primary add-to-cart"
+                                onclick="addFeaturedProduct(1)"
+                            >
+                                ADD TO CART
+                            </button>
+
+                        </div>
+
+                    </article>
+
+
+
+                    <!-- PRODUCT 2 -->
+
+                    <article class="product-card">
+
+                        <a
+                            href="product.html?id=2"
+                            class="product-image"
+                        >
+
+                            <span class="product-badge">
+                                BESTSELLER
+                            </span>
+
+
+                            <img
+                                src="image/products/elegant-diamond-ring.jpg"
+                                alt="Elegant Diamond Ring"
+                            >
+
+                        </a>
+
+
+                        <div class="product-info">
+
+                            <span class="product-category">
+                                RINGS
+                            </span>
+
+
+                            <h3>
+                                Elegant Diamond Ring
+                            </h3>
+
+
+                            <p class="price">
+                                ₹18,499
+                            </p>
+
+
+                            <button
+                                type="button"
+                                class="btn btn-primary add-to-cart"
+                                onclick="addFeaturedProduct(2)"
+                            >
+                                ADD TO CART
+                            </button>
+
+                        </div>
+
+                    </article>
+
+
+
+                    <!-- PRODUCT 3 -->
+
+                    <article class="product-card">
+
+                        <a
+                            href="product.html?id=3"
+                            class="product-image"
+                        >
+
+                            <span class="product-badge">
+                                NEW
+                            </span>
+
+
+                            <img
+                                src="image/products/classic-gold-earrings.jpg"
+                                alt="Classic Gold Earrings"
+                            >
+
+                        </a>
+
+
+                        <div class="product-info">
+
+                            <span class="product-category">
+                                EARRINGS
+                            </span>
+
+
+                            <h3>
+                                Classic Gold Earrings
+                            </h3>
+
+
+                            <p class="price">
+                                ₹12,999
+                            </p>
+
+
+                            <button
+                                type="button"
+                                class="btn btn-primary add-to-cart"
+                                onclick="addFeaturedProduct(3)"
+                            >
+                                ADD TO CART
+                            </button>
+
+                        </div>
+
+                    </article>
+
+                </div>
+
+
+
+                <div
+                    style="
+                        text-align:center;
+                        margin-top:45px;
+                    "
+                >
+
+                    <a
+                        href="shop.html"
+                        class="btn btn-primary"
+                    >
+                        VIEW ALL JEWELLERY
+                    </a>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             ABOUT
+        ================================================== -->
+
+        <section
+            id="about"
+            class="about-section"
+        >
+
+            <div class="container about-grid">
+
+
+                <div class="about-visual">
+
+                    <div class="about-card">
+
+                        <span>
+                            EST.
+                        </span>
+
+                        <strong>
+                            TIRUPATI
+                        </strong>
+
+                        <small>
+                            JEWELLERS
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="about-content">
+
+                    <p class="eyebrow">
+                        OUR STORY
+                    </p>
+
+
+                    <h2>
+                        Where tradition meets modern elegance.
+                    </h2>
+
+
+                    <p>
+
+                        At Tirupati Jewellers, we believe jewellery
+                        is more than an accessory. It is a memory,
+                        a celebration and a part of your story.
+
+                    </p>
+
+
+                    <p>
+
+                        Our collections combine timeless craftsmanship
+                        with contemporary design to create pieces
+                        you'll treasure for years to come.
+
+                    </p>
+
+
+                    <a
+                        href="#contact"
+                        class="text-link"
+                    >
+                        Learn More About Us →
+                    </a>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             WHY US
+        ================================================== -->
+
+        <section class="section why-us">
+
+            <div class="container">
+
+
+                <div class="section-heading">
+
+                    <p class="eyebrow">
+                        WHY TIRUPATI JEWELLERS
+                    </p>
+
+
+                    <h2>
+                        A promise of trust and elegance.
+                    </h2>
+
+                </div>
+
+
+
+                <div class="features-grid">
+
+
+                    <div class="feature">
+
+                        <div class="feature-icon">
+                            ✦
+                        </div>
+
+
+                        <h3>
+                            Premium Craftsmanship
+                        </h3>
+
+
+                        <p>
+
+                            Carefully designed jewellery with
+                            attention to every detail.
+
+                        </p>
+
+                    </div>
+
+
+
+                    <div class="feature">
+
+                        <div class="feature-icon">
+                            ◇
+                        </div>
+
+
+                        <h3>
+                            Authentic Jewellery
+                        </h3>
+
+
+                        <p>
+
+                            Quality jewellery created with
+                            transparency and trust.
+
+                        </p>
+
+                    </div>
+
+
+
+                    <div class="feature">
+
+                        <div class="feature-icon">
+                            ♢
+                        </div>
+
+
+                        <h3>
+                            Timeless Designs
+                        </h3>
+
+
+                        <p>
+
+                            Designs that remain beautiful beyond
+                            trends and seasons.
+
+                        </p>
+
+                    </div>
+
+
+
+                    <div class="feature">
+
+                        <div class="feature-icon">
+                            ♡
+                        </div>
+
+
+                        <h3>
+                            Customer First
+                        </h3>
+
+
+                        <p>
+
+                            Your satisfaction and experience
+                            always come first.
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             CTA
+        ================================================== -->
+
+        <section class="cta">
+
+            <div class="container">
+
+                <p class="eyebrow">
+                    FIND YOUR SIGNATURE PIECE
+                </p>
+
+
+                <h2>
+
+                    Something beautiful
+                    <br>
+                    is waiting for you.
+
+                </h2>
+
+
+                <a
+                    href="shop.html"
+                    class="btn btn-primary"
+                >
+                    SHOP JEWELLERY
+                </a>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             CONTACT
+        ================================================== -->
+
+        <section
+            id="contact"
+            class="section contact"
+        >
+
+            <div class="container contact-content">
+
+                <p class="eyebrow">
+                    GET IN TOUCH
+                </p>
+
+
+                <h2>
+
+                    Let's find something
+                    <br>
+                    beautiful for you.
+
+                </h2>
+
+
+                <p>
+
+                    Have a question about our jewellery
+                    or need assistance? Our team would
+                    love to hear from you.
+
+                </p>
+
+
+                <div
+                    style="
+                        display:flex;
+                        justify-content:center;
+                        gap:15px;
+                        flex-wrap:wrap;
+                    "
+                >
+
+                    <a
+                        href="mailto:info@tirupatijewellers.com"
+                        class="btn btn-primary"
+                    >
+                        EMAIL US
+                    </a>
+
+
+                    <a
+                        href="tel:+919999999999"
+                        class="btn btn-outline"
+                    >
+                        CALL US
+                    </a>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
+
+    <footer class="footer">
+
+        <div class="container footer-grid">
+
+
+            <!-- BRAND -->
+
+            <div>
+
+                <div class="logo footer-logo">
+
+                    <span class="logo-main">
+                        TIRUPATI
+                    </span>
+
+                    <span class="logo-sub">
+                        JEWELLERS
+                    </span>
+
+                </div>
+
+
+                <p>
+                    Timeless jewellery for timeless moments.
+                </p>
+
+            </div>
+
+
+
+            <!-- QUICK LINKS -->
+
+            <div>
+
+                <h4>
+                    QUICK LINKS
+                </h4>
+
+
+                <a href="index.html">
+                    Home
+                </a>
+
+
+                <a href="shop.html">
+                    Shop
+                </a>
+
+
+                <a href="#collections">
+                    Collections
+                </a>
+
+
+                <a href="#about">
+                    About
+                </a>
+
+            </div>
+
+
+
+            <!-- CUSTOMER -->
+
+            <div>
+
+                <h4>
+                    CUSTOMER
+                </h4>
+
+
+                <a href="cart.html">
+                    Cart
+                </a>
+
+
+                <a href="checkout.html">
+                    Checkout
+                </a>
+
+
+                <a href="#contact">
+                    Contact
+                </a>
+
+            </div>
+
+
+
+            <!-- CONNECT -->
+
+            <div>
+
+                <h4>
+                    CONNECT
+                </h4>
+
+
+                <p>
+                    Follow Tirupati Jewellers
+                </p>
+
+
+                <div class="social-links">
+
+                    <a href="#">
+                        Instagram
+                    </a>
+
+
+                    <a href="#">
+                        Facebook
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="footer-bottom">
+
+            <p>
+                © 2026 Tirupati Jewellers.
+                All rights reserved.
+            </p>
+
+
+            <p>
+                Designed with elegance.
+            </p>
+
+        </div>
+
+    </footer>
+
+
+
+    <!-- =====================================================
+         JAVASCRIPT
+    ====================================================== -->
+
+    <script src="js/product.js"></script>
+
+    <script src="js/cart.js"></script>
+
+    <script src="js/script.js"></script>
+
+
+    <script>
+
+        /* =========================================
+           SEARCH
+        ========================================= */
+
+        function openSearch() {
+
+            const searchBox =
+                document.getElementById("searchBox");
+
+            searchBox.style.display = "block";
+
+            const input =
+                document.getElementById("searchInput");
+
+            input.focus();
+
+        }
+
+
+        function closeSearch() {
+
+            document.getElementById(
+                "searchBox"
+            ).style.display = "none";
+
+        }
+
+
+        function handleSearch(event) {
+
+            if (event.key === "Enter") {
+
+                performSearch();
+
+            }
+
+        }
+
+
+        function performSearch() {
+
+            const input =
+                document
+                    .getElementById("searchInput")
+                    .value
+                    .trim();
+
+            if (!input) {
+
+                return;
+
+            }
+
+            window.location.href =
+                "shop.html?search=" +
+                encodeURIComponent(input);
+
+        }
+
+
+
+        /* =========================================
+           FEATURED PRODUCTS
+        ========================================= */
+
+        function addFeaturedProduct(productId) {
+
+            if (
+                typeof products === "undefined"
+            ) {
+
+                alert(
+                    "Product system is loading. Please try again."
+                );
+
+                return;
+
+            }
+
+
+            const product =
+                products.find(
+                    item => item.id === productId
+                );
+
+
+            if (!product) {
+
+                alert(
+                    "Product could not be found."
+                );
+
+                return;
+
+            }
+
+
+            let cart =
+                JSON.parse(
+                    localStorage.getItem("cart")
+                ) || [];
+
+
+            const existingProduct =
+                cart.find(
+                    item => item.id === product.id
+                );
+
+
+            if (existingProduct) {
+
+                existingProduct.quantity++;
+
+            } else {
+
+                cart.push({
+
+                    id: product.id,
+
+                    name: product.name,
+
+                    price: product.price,
+
+                    image: product.image,
+
+                    quantity: 1
+
+                });
+
+            }
+
+
+            localStorage.setItem(
+                "cart",
+                JSON.stringify(cart)
+            );
+
+
+            updateHomeCartCount();
+
+
+            alert(
+                product.name +
+                " added to cart!"
+            );
+
+        }
+
+
+
+        /* =========================================
+           CART COUNT
+        ========================================= */
+
+        function updateHomeCartCount() {
+
+            const cart =
+                JSON.parse(
+                    localStorage.getItem("cart")
+                ) || [];
+
+
+            const count =
+                cart.reduce(
+                    (total, item) =>
+                        total +
+                        Number(item.quantity || 1),
+                    0
+                );
+
+
+            const cartCount =
+                document.getElementById(
+                    "cart-count"
+                );
+
+
+            if (cartCount) {
+
+                cartCount.textContent =
+                    count;
+
+            }
+
+        }
+
+
+        /* =========================================
+           PAGE LOAD
+        ========================================= */
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            function() {
+
+                updateHomeCartCount();
+
+            }
+        );
+
+    </script>
+
+
+</body>
+
+</html>
