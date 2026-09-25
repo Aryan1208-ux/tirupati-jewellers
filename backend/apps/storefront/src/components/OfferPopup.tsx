@@ -24,7 +24,14 @@ export default function OfferPopup() {
 
         // Fetch active offers
         // Since we created a custom route on the backend:
-        const response = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"}/store/offers`);
+        const backendUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000";
+        const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "";
+        const response = await fetch(`${backendUrl}/store/offers`, {
+          headers: {
+            "Content-Type": "application/json",
+            ...(publishableKey ? { "x-publishable-api-key": publishableKey } : {}),
+          },
+        });
         
         if (response.ok) {
           const data = await response.json();
@@ -58,7 +65,7 @@ export default function OfferPopup() {
   };
 
   // We check metadata for voucher_image_url, fallback to a default luxury image if none
-  const imageUrl = offer.campaign?.metadata?.voucher_image_url || "/image/luxury/prod_ring.jpg";
+  const imageUrl = offer.metadata?.voucher_image_url || "/image/luxury/prod_ring.jpg";
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-opacity">

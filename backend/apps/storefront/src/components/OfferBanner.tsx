@@ -8,7 +8,15 @@ export default function OfferBanner() {
   useEffect(() => {
     const fetchOffers = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"}/store/offers`);
+        const backendUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000";
+        const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "";
+        const response = await fetch(`${backendUrl}/store/offers`, {
+          headers: {
+            "Content-Type": "application/json",
+            ...(publishableKey ? { "x-publishable-api-key": publishableKey } : {}),
+          },
+        });
+        
         if (response.ok) {
           const data = await response.json();
           if (data.offers && data.offers.length > 0) {

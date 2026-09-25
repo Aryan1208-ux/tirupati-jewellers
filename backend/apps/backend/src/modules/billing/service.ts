@@ -12,6 +12,13 @@ import {
   BillingMessageTemplate,
   BillingSettings,
 } from "./models/invoice"
+import { BillingEstimate, BillingEstimateItem } from "./models/estimate"
+import {
+  BillingGreetingOccasion,
+  BillingGreetingTemplate,
+  BillingGreetingHistory,
+  BillingGreetingSettings,
+} from "./models/greetings"
 
 class BillingModuleService extends MedusaService({
   BillingCustomer,
@@ -25,6 +32,12 @@ class BillingModuleService extends MedusaService({
   BillingReminderSettings,
   BillingMessageTemplate,
   BillingSettings,
+  BillingEstimate,
+  BillingEstimateItem,
+  BillingGreetingOccasion,
+  BillingGreetingTemplate,
+  BillingGreetingHistory,
+  BillingGreetingSettings,
 }) {
   // MedusaService provides standard CRUD for all registered models.
 }

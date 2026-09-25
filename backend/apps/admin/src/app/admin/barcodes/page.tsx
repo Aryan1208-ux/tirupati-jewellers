@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import JsBarcode from "jsbarcode";
 
-const MEDUSA_BACKEND = "http://localhost:9000";
+const MEDUSA_BACKEND = "/api/medusa";
 
 interface MedusaVariant {
   id: string;
@@ -33,6 +33,8 @@ export default function BarcodesPage() {
   const [searchBarcode, setSearchBarcode] = useState("");
   const [searchResults, setSearchResults] = useState<any[] | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [offset, setOffset] = useState(0);
   const [generatingFor, setGeneratingFor] = useState<string | null>(null);
   const [notification, setNotification] = useState({ message: "", type: "" });
   const [selectedBarcode, setSelectedBarcode] = useState<{
@@ -57,29 +59,12 @@ export default function BarcodesPage() {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      // Login to Medusa admin
-      const authRes = await fetch(`${MEDUSA_BACKEND}/auth/user/emailpass`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: "hello@tirupatijewellers.com",
-          password: "mysecurepassword123",
-        }),
-      });
-      const authData = await authRes.json();
-      const token = authData.token;
-
-      if (!token) {
-        console.error("Failed to get admin token");
-        setLoading(false);
-        return;
-      }
-
+      const searchParams = typeof searchQuery !== 'undefined' && searchQuery
+        ? `&q=${encodeURIComponent(searchQuery)}` 
+        : '';
+        
       const res = await fetch(
-        `${MEDUSA_BACKEND}/admin/products?limit=100&fields=id,title,handle,thumbnail,status,*variants`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        `${MEDUSA_BACKEND}/admin/barcodes?limit=50&offset=${offset}${searchParams}`
       );
       const data = await res.json();
       setProducts(data.products || []);
@@ -90,28 +75,13 @@ export default function BarcodesPage() {
     }
   };
 
-  const getAdminToken = async (): Promise<string> => {
-    const authRes = await fetch(`${MEDUSA_BACKEND}/auth/user/emailpass`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: "hello@tirupatijewellers.com",
-        password: "mysecurepassword123",
-      }),
-    });
-    const authData = await authRes.json();
-    return authData.token;
-  };
-
   const generateBarcode = async (productId: string, variantId: string) => {
     setGeneratingFor(variantId);
     try {
-      const token = await getAdminToken();
       const res = await fetch(`${MEDUSA_BACKEND}/admin/barcodes/generate`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ product_id: productId, variant_id: variantId }),
       });
@@ -137,14 +107,11 @@ export default function BarcodesPage() {
 
     setGeneratingFor(variantId);
     try {
-      const token = await getAdminToken();
-
       // First clear the existing barcode
       await fetch(`${MEDUSA_BACKEND}/admin/products/${productId}/variants/${variantId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ barcode: null }),
       });
@@ -154,7 +121,6 @@ export default function BarcodesPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ product_id: productId, variant_id: variantId }),
       });
@@ -177,10 +143,8 @@ export default function BarcodesPage() {
     if (!searchBarcode.trim()) return;
     setSearchLoading(true);
     try {
-      const token = await getAdminToken();
       const res = await fetch(
-        `${MEDUSA_BACKEND}/admin/barcodes?barcode=${encodeURIComponent(searchBarcode.trim())}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        `${MEDUSA_BACKEND}/admin/barcodes?barcode=${encodeURIComponent(searchBarcode.trim())}`
       );
       const data = await res.json();
       setSearchResults(data.results || []);

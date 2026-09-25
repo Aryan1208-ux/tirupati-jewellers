@@ -35,17 +35,18 @@ export default function ProductCard({ product }: ProductCardProps) {
   const variant = product.variants?.[0];
   const priceAmount =
     product.price ??
-    variant?.calculated_price?.calculated_amount ??
-    85000;
+    variant?.calculated_price?.calculated_amount;
   
   const currency = variant?.calculated_price?.currency_code?.toUpperCase() ?? "INR";
   
   // Format price in Indian Rupee format
-  const formattedPrice = new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: currency,
-    maximumFractionDigits: 0,
-  }).format(priceAmount);
+  const formattedPrice = priceAmount === undefined || priceAmount === null
+    ? "Price Unavailable"
+    : new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: currency,
+        maximumFractionDigits: 0,
+      }).format(priceAmount);
 
   // Determine image
   let imageUrl = product.imageUrl || product.thumbnail;
@@ -160,10 +161,10 @@ export default function ProductCard({ product }: ProductCardProps) {
           </a>
           <button
             onClick={handleQuickAdd}
-            disabled={adding}
+            disabled={adding || priceAmount === undefined || priceAmount === null}
             className="py-2.5 px-2 bg-[#070707] hover:bg-gold text-white hover:text-black font-sans text-[10px] tracking-wider uppercase font-bold transition-colors disabled:opacity-50"
           >
-            {added ? "✓ Added" : adding ? "Adding..." : "+ Add to Bag"}
+            {added ? "✓ Added" : adding ? "Adding..." : priceAmount === undefined || priceAmount === null ? "No Price" : "+ Add to Bag"}
           </button>
         </div>
 

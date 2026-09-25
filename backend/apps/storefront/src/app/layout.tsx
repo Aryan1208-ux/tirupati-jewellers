@@ -6,6 +6,7 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 import { CartProvider } from "@/context/CartContext";
 import OfferPopup from "@/components/OfferPopup";
 import OfferBanner from "@/components/OfferBanner";
+import ActivityTracker from "@/components/ActivityTracker";
 
 export const metadata: Metadata = {
   title: "Tirupati Jewellers | Luxury Gold, Diamond & Bridal Jewellery",
@@ -29,6 +30,7 @@ export default function RootLayout({
     <html lang="en" className="h-full scroll-smooth">
       <body className="min-h-full flex flex-col font-serif bg-cream text-charcoal selection:bg-gold selection:text-black">
         <CartProvider>
+          <ActivityTracker />
           <OfferBanner />
           <Header />
           <OfferPopup />

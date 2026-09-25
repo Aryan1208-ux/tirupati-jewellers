@@ -14,7 +14,16 @@ module.exports = defineConfig({
   },
   modules: [
     {
+      resolve: "./src/modules/rbac",
+    },
+    {
       resolve: "./src/modules/billing",
+    },
+    {
+      resolve: "./src/modules/metal-rates",
+    },
+    {
+      resolve: "./src/modules/analytics",
     },
     {
       resolve: "@medusajs/payment",
@@ -27,6 +36,10 @@ module.exports = defineConfig({
               key_id: process.env.RAZORPAY_KEY_ID || "rzp_test_dummykey",
               key_secret: process.env.RAZORPAY_KEY_SECRET || "dummysecret",
             }
+          },
+          {
+            resolve: "./src/modules/payment-cod",
+            id: "cod",
           }
         ]
       }

@@ -1,528 +1,566 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   JewelleryProduct,
-  getStoredJewelleryProducts,
-  addJewelleryProduct,
-  deleteJewelleryProduct,
+  AdminCategory,
+  fetchAdminCategories,
+  fetchAdminProducts,
+  createAdminProduct,
+  updateAdminProduct,
+  deleteAdminProduct,
 } from "@/lib/admin-products";
-import { isAdminAuthenticated, getAdminUser } from "@/lib/admin-auth";
+import { JewelleryMetadata, JewelleryType, MetalType, Gender, ChargeType } from "@/lib/jewellery";
+import { isAdminAuthenticated, getAdminUser, logoutAdmin } from "@/lib/admin-auth";
+import { RequirePermission } from "@/components/RequirePermission";
 
 export default function AdminDashboardPage() {
   const router = useRouter();
   const [authenticated, setAuthenticated] = useState(false);
   const [products, setProducts] = useState<JewelleryProduct[]>([]);
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [categories, setCategories] = useState<AdminCategory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  
+  // Modal State
+  const [showModal, setShowModal] = useState(false);
+  const [editModeId, setEditModeId] = useState<string | null>(null);
   const [successNotice, setSuccessNotice] = useState("");
 
-  // Form State for Adding New Jewellery
+  // Form State
   const [formData, setFormData] = useState({
     title: "",
-    category: "rings" as JewelleryProduct["category"],
-    purity: "22K BIS 916 Hallmarked",
-    goldWeight: "15.0g",
-    diamondWeight: "1.00ct VVS1-EF",
+    categoryId: "",
     price: 95000,
-    badge: "NEW" as JewelleryProduct["badge"],
+    badge: "NEW CREATION",
     imageUrl: "/image/luxury/prod_ring.jpg",
     description: "",
+    
+    // Jewellery Details
+    jewellery_type: "RING" as JewelleryType,
+    metal_type: "GOLD" as MetalType,
+    purity: "22K BIS 916 Hallmarked",
+    gross_weight_g: "",
+    net_weight_g: "",
+    gender: "WOMEN" as Gender,
+    
+    // Compliance
+    hsn_sac: "",
+    
+    // Charges
+    making_charge_type: "FIXED" as ChargeType,
+    making_charge_value: "",
+    stone_charge_type: "FIXED" as ChargeType,
+    stone_charge_value: "",
+    
+    // Diamond (Toggle)
+    has_diamond: false,
+    diamond_carat: "",
+    diamond_shape: "",
+    diamond_color: "",
+    diamond_clarity: "",
+    diamond_cut: "",
+    
+    // Certificate (Toggle)
+    has_certificate: false,
+    cert_type: "",
+    cert_provider: "",
+    cert_number: "",
+    cert_url: "",
   });
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [cats, prods] = await Promise.all([
+        fetchAdminCategories(),
+        fetchAdminProducts(),
+      ]);
+      setCategories(cats);
+      setProducts(prods);
+      if (cats.length > 0 && !formData.categoryId) {
+        setFormData((prev) => ({ ...prev, categoryId: cats[0].id }));
+      }
+    } catch (err) {
+      console.error("Failed to load dashboard data:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [formData.categoryId]);
 
   useEffect(() => {
     if (!isAdminAuthenticated()) {
       router.push("/admin/login");
     } else {
       setAuthenticated(true);
-      setProducts(getStoredJewelleryProducts());
+      loadData();
     }
-  }, [router]);
+  }, [router, loadData]);
 
   const handleLogout = () => {
-    localStorage.removeItem("tj_admin_authenticated");
-    localStorage.removeItem("tj_admin_user");
+    logoutAdmin();
     router.push("/admin/login");
   };
 
   const adminUser = getAdminUser();
 
-  const handleCreateProduct = (e: React.FormEvent) => {
+  const resetForm = () => {
+    setFormData({
+      title: "",
+      categoryId: categories[0]?.id || "",
+      price: 95000,
+      badge: "NEW CREATION",
+      imageUrl: "/image/luxury/prod_ring.jpg",
+      description: "",
+      jewellery_type: "RING",
+      metal_type: "GOLD",
+      purity: "22K BIS 916 Hallmarked",
+      gross_weight_g: "",
+      net_weight_g: "",
+      gender: "WOMEN",
+      hsn_sac: "",
+      making_charge_type: "FIXED",
+      making_charge_value: "",
+      stone_charge_type: "FIXED",
+      stone_charge_value: "",
+      has_diamond: false,
+      diamond_carat: "",
+      diamond_shape: "",
+      diamond_color: "",
+      diamond_clarity: "",
+      diamond_cut: "",
+      has_certificate: false,
+      cert_type: "",
+      cert_provider: "",
+      cert_number: "",
+      cert_url: "",
+    });
+    setEditModeId(null);
+  };
+
+  const openAddModal = () => {
+    resetForm();
+    setShowModal(true);
+  };
+
+  const openEditModal = (p: JewelleryProduct) => {
+    const meta = p.jewellery;
+    setFormData({
+      title: p.title,
+      categoryId: p.categoryId || "",
+      price: p.price,
+      badge: p.badge || "NEW CREATION",
+      imageUrl: p.imageUrl || "",
+      description: p.description || "",
+      
+      jewellery_type: meta?.jewellery_type || "RING",
+      metal_type: meta?.metal_type || "GOLD",
+      purity: meta?.purity || "",
+      gross_weight_g: meta?.gross_weight_g ? String(meta.gross_weight_g) : "",
+      net_weight_g: meta?.net_weight_g ? String(meta.net_weight_g) : "",
+      gender: meta?.gender || "WOMEN",
+      
+      hsn_sac: meta?.hsn_sac || "",
+      
+      making_charge_type: meta?.making_charge?.type || "FIXED",
+      making_charge_value: meta?.making_charge?.value ? String(meta.making_charge.value) : "",
+      stone_charge_type: meta?.stone_charge?.type || "FIXED",
+      stone_charge_value: meta?.stone_charge?.value ? String(meta.stone_charge.value) : "",
+      
+      has_diamond: !!meta?.diamond,
+      diamond_carat: meta?.diamond?.carat ? String(meta.diamond.carat) : "",
+      diamond_shape: meta?.diamond?.shape || "",
+      diamond_color: meta?.diamond?.color || "",
+      diamond_clarity: meta?.diamond?.clarity || "",
+      diamond_cut: meta?.diamond?.cut || "",
+      
+      has_certificate: !!meta?.certificate,
+      cert_type: meta?.certificate?.type || "",
+      cert_provider: meta?.certificate?.provider || "",
+      cert_number: meta?.certificate?.number || "",
+      cert_url: meta?.certificate?.url || "",
+    });
+    setEditModeId(p.id);
+    setShowModal(true);
+  };
+
+  const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim() || formData.price <= 0) {
-      alert("Please provide a valid jewellery title and price.");
+      alert("Please provide a valid title and price.");
       return;
     }
 
-    const created = addJewelleryProduct({
-      title: formData.title.trim(),
-      category: formData.category,
+    // Phase 13: Strict Validation before API submission
+    const gw = Number(formData.gross_weight_g);
+    const nw = Number(formData.net_weight_g);
+    
+    if (formData.gross_weight_g && (isNaN(gw) || gw < 0)) {
+      return alert("Gross weight must be a valid positive number.");
+    }
+    if (formData.net_weight_g && (isNaN(nw) || nw < 0)) {
+      return alert("Net weight must be a valid positive number.");
+    }
+    if (formData.gross_weight_g && formData.net_weight_g && nw > gw) {
+      return alert("Net weight cannot exceed gross weight.");
+    }
+
+    // Construct Master Metadata
+    const jMeta: any = {
+      schema_version: 1,
+      jewellery_type: formData.jewellery_type,
+      metal_type: formData.metal_type,
       purity: formData.purity,
-      goldWeight: formData.goldWeight,
-      diamondWeight: formData.diamondWeight,
-      price: Number(formData.price),
+      gender: formData.gender,
+    };
+
+    if (formData.gross_weight_g) jMeta.gross_weight_g = gw;
+    if (formData.net_weight_g) jMeta.net_weight_g = nw;
+    if (formData.hsn_sac.trim()) jMeta.hsn_sac = formData.hsn_sac.trim();
+
+    if (formData.making_charge_value) {
+      jMeta.making_charge = { type: formData.making_charge_type, value: Number(formData.making_charge_value) };
+    }
+    if (formData.stone_charge_value) {
+      jMeta.stone_charge = { type: formData.stone_charge_type, value: Number(formData.stone_charge_value) };
+    }
+
+    if (formData.has_diamond) {
+      jMeta.diamond = {};
+      if (formData.diamond_carat) jMeta.diamond.carat = Number(formData.diamond_carat);
+      if (formData.diamond_shape) jMeta.diamond.shape = formData.diamond_shape;
+      if (formData.diamond_color) jMeta.diamond.color = formData.diamond_color;
+      if (formData.diamond_clarity) jMeta.diamond.clarity = formData.diamond_clarity;
+      if (formData.diamond_cut) jMeta.diamond.cut = formData.diamond_cut;
+    }
+
+    if (formData.has_certificate) {
+      jMeta.certificate = {};
+      if (formData.cert_type) jMeta.certificate.type = formData.cert_type;
+      if (formData.cert_provider) jMeta.certificate.provider = formData.cert_provider;
+      if (formData.cert_number) jMeta.certificate.number = formData.cert_number;
+      if (formData.cert_url) jMeta.certificate.url = formData.cert_url;
+    }
+
+    setSubmitting(true);
+    
+    const productPayload = {
+      title: formData.title,
+      categoryId: formData.categoryId,
+      price: formData.price,
       badge: formData.badge,
       imageUrl: formData.imageUrl,
-      description: formData.description || "Exquisite handcrafted fine jewellery piece by Tirupati Jewellers.",
-      inStock: true,
-    });
+      description: formData.description,
+      jewellery: jMeta as JewelleryMetadata,
+    };
 
-    setProducts(getStoredJewelleryProducts());
-    setShowAddModal(false);
-    setSuccessNotice(`"${created.title}" was published live to the storefront!`);
-    setTimeout(() => setSuccessNotice(""), 5000);
+    let result;
+    if (editModeId) {
+      result = await updateAdminProduct(editModeId, productPayload);
+    } else {
+      result = await createAdminProduct(productPayload);
+    }
 
-    // Reset Form
-    setFormData({
-      title: "",
-      category: "rings",
-      purity: "22K BIS 916 Hallmarked",
-      goldWeight: "15.0g",
-      diamondWeight: "1.00ct VVS1-EF",
-      price: 95000,
-      badge: "NEW",
-      imageUrl: "/image/luxury/prod_ring.jpg",
-      description: "",
-    });
+    if (result.success) {
+      await loadData();
+      setShowModal(false);
+      setSuccessNotice(`"${result.product?.title || formData.title}" was ${editModeId ? "updated" : "published live"}!`);
+      setTimeout(() => setSuccessNotice(""), 5000);
+      resetForm();
+    } else {
+      alert(result.error || "Failed to save jewellery to Medusa backend.");
+    }
+    setSubmitting(false);
   };
 
-  const handleDelete = (id: string, title: string) => {
+  const handleDelete = async (id: string, title: string) => {
     if (confirm(`Are you sure you want to remove "${title}" from the live catalogue?`)) {
-      deleteJewelleryProduct(id);
-      setProducts(getStoredJewelleryProducts());
-      setSuccessNotice(`Removed "${title}".`);
-      setTimeout(() => setSuccessNotice(""), 4000);
+      const ok = await deleteAdminProduct(id);
+      if (ok) {
+        await loadData();
+        setSuccessNotice(`Removed "${title}".`);
+        setTimeout(() => setSuccessNotice(""), 4000);
+      } else {
+        alert(`Failed to delete "${title}".`);
+      }
     }
   };
 
   if (!authenticated) {
-    return (
-      <div className="min-h-screen bg-[#070707] flex items-center justify-center text-white font-sans text-xs">
-        Checking admin permissions...
-      </div>
-    );
+    return <div className="min-h-screen bg-[#070707] flex items-center justify-center text-white text-xs">Loading...</div>;
   }
 
-  const presetImages = [
-    { label: "Solitaire Diamond Ring", url: "/image/luxury/prod_ring.jpg" },
-    { label: "Royal Emerald & Polki Choker", url: "/image/luxury/prod_choker.jpg" },
-    { label: "Imperial Ruby Temple Jhumkas", url: "/image/luxury/prod_earrings.jpg" },
-    { label: "Diamond Tennis Bracelet Cuff", url: "/image/luxury/prod_bracelet.jpg" },
-    { label: "Grand Royal Bridal Set", url: "/image/luxury/bridal.jpg" },
-    { label: "Master Atelier Creation", url: "/image/luxury/craftsmanship.jpg" },
-  ];
-
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
-      
-      {/* Top Admin Bar */}
-      <header className="bg-[#111111] border-b border-gold/30 px-4 sm:px-8 py-4 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl text-gold">👑</span>
-          <div>
-            <h1 className="font-display text-lg sm:text-xl font-bold tracking-[0.2em] text-white">
-              TIRUPATI JEWELLERS
-            </h1>
-            <p className="font-sans text-[9px] uppercase tracking-[0.35em] text-gold font-semibold">
-              ADMINISTRATION & INVENTORY CONTROL
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4 flex-wrap">
-          {adminUser && (
-            <span className="text-[10px] font-sans text-white/40 uppercase tracking-wider hidden sm:block">
-              {adminUser}
-            </span>
-          )}
-          <a
-            href="http://localhost:3000/"
-            target="_blank"
-            className="text-xs font-sans text-white/70 hover:text-gold uppercase tracking-wider flex items-center gap-1"
-          >
-            <span>↗</span> Storefront
-          </a>
-          <Link
-            href="/admin/billing"
-            className="border border-gold bg-gold/20 text-gold hover:bg-gold hover:text-black font-sans text-xs uppercase tracking-widest px-3 py-1.5 font-bold transition-colors flex items-center gap-1.5"
-          >
-            🧾 Offline Billing
-          </Link>
-          <Link
-            href="/admin/barcodes"
-            className="border border-gold bg-gold/20 text-gold hover:bg-gold hover:text-black font-sans text-xs uppercase tracking-widest px-3 py-1.5 font-bold transition-colors flex items-center gap-1.5"
-          >
-            📊 Barcodes
-          </Link>
-          <a
-            href="http://localhost:9000/app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="border border-white/20 text-white/60 hover:text-gold font-sans text-xs uppercase tracking-wider px-3 py-1.5 transition-colors"
-          >
-            Medusa ↗
-          </a>
-          <button
-            onClick={handleLogout}
-            className="bg-red-900/30 hover:bg-red-800 text-red-200 border border-red-700/50 font-sans text-xs uppercase tracking-wider px-3 py-1.5 transition-colors"
-          >
-            Sign Out
-          </button>
-        </div>
-      </header>
-
-      {/* Main Content */}
+    <div className="min-h-screen bg-[#0a0a0a] text-white font-sans text-xs">
+      {/* MAIN CONTENT */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         
-        {/* Success Banner */}
         {successNotice && (
-          <div className="mb-8 p-4 bg-green-950/80 border border-green-500/60 text-green-200 text-xs font-sans flex justify-between items-center shadow-xl">
+          <div className="mb-8 p-4 bg-green-950/80 border border-green-500/60 text-green-200 flex justify-between">
             <span>✓ {successNotice}</span>
             <button onClick={() => setSuccessNotice("")} className="text-white/60 hover:text-white">✕</button>
           </div>
         )}
 
-        {/* Dashboard Actions & Metric Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-          
+        {/* METRICS & ACTIONS */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-6 mb-10">
           <div className="bg-[#121212] border border-white/10 p-6">
-            <p className="font-sans text-[11px] uppercase tracking-widest text-gold-light mb-1 font-semibold">Live Catalogue Items</p>
-            <p className="font-display text-3xl font-bold text-white">{products.length}</p>
+            <p className="uppercase tracking-widest text-gold-light mb-1 font-semibold">Live Items</p>
+            <p className="font-display text-3xl font-bold">{products.length}</p>
           </div>
-
-          <div className="bg-[#121212] border border-white/10 p-6">
-            <p className="font-sans text-[11px] uppercase tracking-widest text-gold-light mb-1 font-semibold">Gold Purity Standard</p>
-            <p className="font-display text-xl font-bold text-white">100% BIS 916</p>
-          </div>
-
-          <div className="bg-[#121212] border border-white/10 p-6 flex flex-col justify-between">
-            <p className="font-sans text-[11px] uppercase tracking-widest text-gold-light mb-1 font-semibold">Barcode System</p>
-            <Link href="/admin/barcodes" className="font-display text-xl font-bold text-white hover:text-gold transition-colors">
-              Manage →
-            </Link>
-            <Link href="/admin/barcodes/scanner" className="font-sans text-[10px] text-white/40 hover:text-gold mt-1 uppercase tracking-wider">
-              📷 Open Scanner
-            </Link>
-          </div>
-
-          <div className="bg-[#121212] border border-gold/40 p-6 flex flex-col justify-between">
-            <p className="font-sans text-[11px] uppercase tracking-widest text-gold font-bold mb-2">Live Store Action</p>
-            <div className="space-y-2">
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="w-full bg-gold hover:bg-gold-light text-[#070707] py-2.5 px-4 font-sans text-xs uppercase tracking-widest font-bold transition-colors text-center shadow-lg"
-              >
-                + Add New Jewellery
+          <div className="bg-[#121212] border border-gold/40 p-6 flex flex-col justify-center sm:col-span-2 lg:col-span-1">
+            <RequirePermission code="products.create">
+              <button onClick={openAddModal} className="w-full bg-gold hover:bg-gold-light text-[#070707] py-3 px-4 uppercase tracking-widest font-bold shadow-lg">
+                + Add Master Jewellery
               </button>
-              <Link
-                href="/admin/billing/create"
-                className="w-full block bg-[#1a1610] hover:bg-gold/20 border border-gold/40 text-gold py-2.5 px-4 font-sans text-xs uppercase tracking-widest font-bold transition-colors text-center"
-              >
-                🧾 New GST Invoice
-              </Link>
-            </div>
+            </RequirePermission>
           </div>
-
         </div>
 
-        {/* Live Products Table Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-          <div>
-            <h2 className="font-display text-2xl text-white font-normal">
-              Active Jewellery & Diamond Inventory
-            </h2>
-            <p className="font-sans text-xs text-white/50 mt-1">
-              Changes made here reflect immediately on Tirupati Jewellers storefront.
-            </p>
-          </div>
-
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="bg-gold hover:bg-gold-light text-[#070707] py-2.5 px-6 font-sans text-xs uppercase tracking-widest font-bold transition-colors shadow-lg"
-          >
-            + Add Jewellery Item
-          </button>
-        </div>
-
-        {/* Products Table */}
+        {/* PRODUCTS TABLE */}
         <div className="bg-[#111111] border border-white/10 overflow-x-auto shadow-2xl">
-          <table className="w-full text-left font-sans text-xs">
+          <table className="w-full text-left">
             <thead className="bg-[#181818] text-gold-light uppercase tracking-wider text-[10px] border-b border-white/10">
               <tr>
-                <th className="py-4 px-6">Piece Preview</th>
-                <th className="py-4 px-6">Title & Category</th>
-                <th className="py-4 px-6">Gold / Diamond Specs</th>
+                <th className="py-4 px-6">Preview</th>
+                <th className="py-4 px-6">Product Identity</th>
+                <th className="py-4 px-6">Jewellery Master Data</th>
                 <th className="py-4 px-6">Price (INR)</th>
-                <th className="py-4 px-6">Badge</th>
                 <th className="py-4 px-6 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {products.map((item) => (
                 <tr key={item.id} className="hover:bg-[#161616] transition-colors">
-                  
-                  {/* Photo */}
                   <td className="py-4 px-6">
-                    <div className="w-14 h-14 bg-[#070707] border border-gold/30 overflow-hidden">
-                      <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
+                    <div className="w-14 h-14 bg-[#070707] border border-gold/30">
+                      {item.imageUrl ? (
+                        <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-[8px] text-white/20">No Img</div>
+                      )}
                     </div>
                   </td>
-
-                  {/* Title & Category */}
                   <td className="py-4 px-6">
-                    <p className="font-serif text-base text-white font-normal">{item.title}</p>
+                    <p className="font-serif text-base text-white">{item.title}</p>
                     <p className="text-gold text-[10px] uppercase tracking-wider mt-0.5">{item.category}</p>
                   </td>
-
-                  {/* Specs */}
                   <td className="py-4 px-6">
-                    <p className="text-white/90 font-medium">{item.purity}</p>
-                    <p className="text-white/50 text-[10px] mt-0.5">
-                      {item.goldWeight ? `Gold: ${item.goldWeight}` : ""} {item.diamondWeight ? `• Dia: ${item.diamondWeight}` : ""}
-                    </p>
+                    {/* Phase 19: Product Detail in Admin table using Structured Fields */}
+                    <div className="flex flex-col gap-1">
+                      {item.jewellery?.purity && <p className="text-white/90 font-bold">{item.jewellery.purity} {item.jewellery.metal_type}</p>}
+                      {(item.jewellery?.gross_weight_g || item.jewellery?.net_weight_g) && (
+                        <p className="text-white/50 text-[10px]">
+                          Gross: {item.jewellery.gross_weight_g ? `${item.jewellery.gross_weight_g}g` : "--"} • 
+                          Net: {item.jewellery.net_weight_g ? `${item.jewellery.net_weight_g}g` : "--"}
+                        </p>
+                      )}
+                      {item.jewellery?.diamond && (
+                        <p className="text-cyan-200/70 text-[10px]">Diamond: {item.jewellery.diamond.carat}ct {item.jewellery.diamond.color} {item.jewellery.diamond.clarity}</p>
+                      )}
+                      {item.jewellery?.hsn_sac && (
+                        <p className="text-emerald-200/70 text-[10px]">HSN: {item.jewellery.hsn_sac}</p>
+                      )}
+                      {!item.jewellery && <p className="text-white/30 italic">No master data</p>}
+                    </div>
                   </td>
-
-                  {/* Price */}
-                  <td className="py-4 px-6">
-                    <span className="font-serif text-base text-gold font-bold">
-                      {new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(item.price)}
-                    </span>
+                  <td className="py-4 px-6 font-serif text-base text-gold font-bold">
+                    {new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(item.price)}
                   </td>
-
-                  {/* Badge */}
-                  <td className="py-4 px-6">
-                    <span className="bg-[#070707] text-gold text-[9px] font-bold px-2 py-0.5 border border-gold/30 tracking-wider">
-                      {item.badge}
-                    </span>
-                  </td>
-
-                  {/* Actions */}
                   <td className="py-4 px-6 text-right space-x-3">
-                    <Link
-                      href={`/product/${item.handle}`}
-                      target="_blank"
-                      className="text-gold-light hover:text-white underline"
-                    >
-                      View Live ↗
-                    </Link>
-                    <button
-                      onClick={() => handleDelete(item.id, item.title)}
-                      className="text-red-400 hover:text-red-300 hover:underline"
-                    >
-                      Delete
-                    </button>
+                    <RequirePermission code="products.update">
+                      <button onClick={() => openEditModal(item)} className="text-blue-400 hover:text-blue-300">Edit</button>
+                    </RequirePermission>
+                    <RequirePermission code="products.delete">
+                      <button onClick={() => handleDelete(item.id, item.title)} className="text-red-400 hover:text-red-300">Delete</button>
+                    </RequirePermission>
                   </td>
-
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-
       </main>
 
-      {/* ADD JEWELLERY MODAL */}
-      {showAddModal && (
+      {/* JEWELLERY MASTER DATA FORM MODAL */}
+      {showModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-[#111111] border border-gold/40 max-w-2xl w-full p-8 shadow-2xl my-8">
+          <div className="bg-[#111111] border border-gold/40 max-w-4xl w-full p-8 shadow-2xl my-8 relative max-h-[90vh] overflow-y-auto custom-scrollbar">
             
-            <div className="flex justify-between items-center mb-6 pb-4 border-b border-white/10">
+            <div className="sticky top-0 bg-[#111111] z-10 flex justify-between items-center mb-6 pb-4 border-b border-white/10">
               <div>
-                <h3 className="font-display text-2xl text-white">Add Fine Jewellery & Diamonds</h3>
-                <p className="font-sans text-xs text-gold-light mt-1">Publish live to Tirupati Jewellers storefront</p>
+                <h3 className="font-display text-2xl text-white">{editModeId ? "Edit" : "Add"} Master Jewellery</h3>
+                <p className="text-gold-light mt-1">Configure canonical metadata for PostgreSQL and Storefront</p>
               </div>
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="text-white/60 hover:text-white text-xl"
-              >
-                ✕
-              </button>
+              <button onClick={() => setShowModal(false)} className="text-white/60 hover:text-white text-xl">✕</button>
             </div>
 
-            <form onSubmit={handleCreateProduct} className="space-y-4 font-sans text-xs">
+            <form onSubmit={handleSaveProduct} className="space-y-8">
               
-              {/* Title */}
-              <div>
-                <label className="block text-gold-light font-bold mb-1 uppercase tracking-wider">
-                  Jewellery Title / Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Tirupati Royal Kundan Choker Set"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full bg-[#181818] border border-white/20 p-3 text-white focus:outline-none focus:border-gold"
-                />
-              </div>
+              {/* SECTION: GENERAL */}
+              <section className="bg-[#181818] p-5 border border-white/5">
+                <h4 className="text-gold uppercase tracking-widest font-bold border-b border-white/10 pb-2 mb-4">General Commerce Data</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <label className="block text-white/70 mb-1">Product Title *</label>
+                    <input type="text" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full bg-[#0a0a0a] border border-white/20 p-2 focus:border-gold outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-white/70 mb-1">Category *</label>
+                    <select value={formData.categoryId} onChange={e => setFormData({...formData, categoryId: e.target.value})} className="w-full bg-[#0a0a0a] border border-white/20 p-2 focus:border-gold outline-none">
+                      {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-white/70 mb-1">Selling Price (INR) *</label>
+                    <input type="number" required min="1" value={formData.price} onChange={e => setFormData({...formData, price: Number(e.target.value)})} className="w-full bg-[#0a0a0a] border border-white/20 p-2 focus:border-gold outline-none" />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-white/70 mb-1">Image URL</label>
+                    <input type="text" value={formData.imageUrl} onChange={e => setFormData({...formData, imageUrl: e.target.value})} className="w-full bg-[#0a0a0a] border border-white/20 p-2 focus:border-gold outline-none" />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-white/70 mb-1">Description</label>
+                    <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-[#0a0a0a] border border-white/20 p-2 focus:border-gold outline-none" rows={3}></textarea>
+                  </div>
+                </div>
+              </section>
 
-              {/* Category & Badge */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-gold-light font-bold mb-1 uppercase tracking-wider">
-                    Category *
+              {/* SECTION: JEWELLERY DETAILS */}
+              <section className="bg-[#181818] p-5 border border-white/5">
+                <h4 className="text-gold uppercase tracking-widest font-bold border-b border-white/10 pb-2 mb-4">Jewellery Master Data</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-white/70 mb-1">Type</label>
+                    <select value={formData.jewellery_type} onChange={e => setFormData({...formData, jewellery_type: e.target.value as any})} className="w-full bg-[#0a0a0a] border border-white/20 p-2 focus:border-gold outline-none">
+                      {["RING", "NECKLACE", "EARRINGS", "BRACELET", "BANGLE", "PENDANT", "CHAIN", "NOSE_PIN", "ANKLET", "OTHER"].map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-white/70 mb-1">Metal</label>
+                    <select value={formData.metal_type} onChange={e => setFormData({...formData, metal_type: e.target.value as any})} className="w-full bg-[#0a0a0a] border border-white/20 p-2 focus:border-gold outline-none">
+                      {["GOLD", "SILVER", "PLATINUM", "OTHER"].map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-white/70 mb-1">Purity Label</label>
+                    <input type="text" placeholder="e.g. 22K BIS 916" value={formData.purity} onChange={e => setFormData({...formData, purity: e.target.value})} className="w-full bg-[#0a0a0a] border border-white/20 p-2 focus:border-gold outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-white/70 mb-1">Gross Weight (grams)</label>
+                    <input type="number" step="0.001" placeholder="15.500" value={formData.gross_weight_g} onChange={e => setFormData({...formData, gross_weight_g: e.target.value})} className="w-full bg-[#0a0a0a] border border-white/20 p-2 focus:border-gold outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-white/70 mb-1">Net Weight (grams)</label>
+                    <input type="number" step="0.001" placeholder="14.200" value={formData.net_weight_g} onChange={e => setFormData({...formData, net_weight_g: e.target.value})} className="w-full bg-[#0a0a0a] border border-white/20 p-2 focus:border-gold outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-white/70 mb-1">Gender</label>
+                    <select value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value as any})} className="w-full bg-[#0a0a0a] border border-white/20 p-2 focus:border-gold outline-none">
+                      {["WOMEN", "MEN", "UNISEX", "OTHER"].map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                </div>
+              </section>
+
+              {/* SECTION: COMPLIANCE & CHARGES */}
+              <section className="bg-[#181818] p-5 border border-white/5">
+                <h4 className="text-gold uppercase tracking-widest font-bold border-b border-white/10 pb-2 mb-4">Compliance & Master Charges</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-emerald-300/80 mb-1 font-bold">HSN/SAC Code</label>
+                    <input type="text" placeholder="e.g. 711319" value={formData.hsn_sac} onChange={e => setFormData({...formData, hsn_sac: e.target.value})} className="w-full bg-[#0a0a0a] border border-emerald-500/30 p-2 focus:border-emerald-500 outline-none text-emerald-100" />
+                  </div>
+                  <div className="opacity-0 hidden md:block"></div>
+                  
+                  <div className="flex gap-2">
+                    <div className="flex-grow">
+                      <label className="block text-white/70 mb-1">Making Charge</label>
+                      <input type="number" step="0.01" value={formData.making_charge_value} onChange={e => setFormData({...formData, making_charge_value: e.target.value})} className="w-full bg-[#0a0a0a] border border-white/20 p-2 focus:border-gold outline-none" />
+                    </div>
+                    <div className="w-1/3">
+                      <label className="block text-white/70 mb-1">Type</label>
+                      <select value={formData.making_charge_type} onChange={e => setFormData({...formData, making_charge_type: e.target.value as any})} className="w-full bg-[#0a0a0a] border border-white/20 p-2 focus:border-gold outline-none">
+                        <option value="FIXED">Fixed</option><option value="PER_GRAM">Per g</option><option value="PERCENTAGE">%</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <div className="flex-grow">
+                      <label className="block text-white/70 mb-1">Stone Charge</label>
+                      <input type="number" step="0.01" value={formData.stone_charge_value} onChange={e => setFormData({...formData, stone_charge_value: e.target.value})} className="w-full bg-[#0a0a0a] border border-white/20 p-2 focus:border-gold outline-none" />
+                    </div>
+                    <div className="w-1/3">
+                      <label className="block text-white/70 mb-1">Type</label>
+                      <select value={formData.stone_charge_type} onChange={e => setFormData({...formData, stone_charge_type: e.target.value as any})} className="w-full bg-[#0a0a0a] border border-white/20 p-2 focus:border-gold outline-none">
+                        <option value="FIXED">Fixed</option><option value="PER_GRAM">Per g</option><option value="PERCENTAGE">%</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* SECTION: DIAMOND */}
+              <section className="bg-[#181818] p-5 border border-white/5">
+                <div className="flex justify-between items-center border-b border-white/10 pb-2 mb-4">
+                  <h4 className="text-gold uppercase tracking-widest font-bold">Diamond Details</h4>
+                  <label className="flex items-center gap-2 cursor-pointer text-white/70">
+                    <input type="checkbox" checked={formData.has_diamond} onChange={e => setFormData({...formData, has_diamond: e.target.checked})} className="accent-gold w-4 h-4" />
+                    Contains Diamonds
                   </label>
-                  <select
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
-                    className="w-full bg-[#181818] border border-white/20 p-3 text-white focus:outline-none focus:border-gold"
-                  >
-                    <option value="rings">Solitaire & Polki Rings</option>
-                    <option value="necklaces">Chokers & Haars</option>
-                    <option value="earrings">Temple & Diamond Earrings</option>
-                    <option value="bracelets">Bracelets & Kadas</option>
-                    <option value="bridal">Royal Bridal Suite</option>
-                  </select>
                 </div>
+                {formData.has_diamond && (
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    <div><label className="block text-white/70 mb-1">Carat</label><input type="number" step="0.01" value={formData.diamond_carat} onChange={e => setFormData({...formData, diamond_carat: e.target.value})} className="w-full bg-[#0a0a0a] border border-white/20 p-2 focus:border-gold outline-none" /></div>
+                    <div><label className="block text-white/70 mb-1">Color</label><input type="text" placeholder="E-F" value={formData.diamond_color} onChange={e => setFormData({...formData, diamond_color: e.target.value})} className="w-full bg-[#0a0a0a] border border-white/20 p-2 focus:border-gold outline-none" /></div>
+                    <div><label className="block text-white/70 mb-1">Clarity</label><input type="text" placeholder="VVS1" value={formData.diamond_clarity} onChange={e => setFormData({...formData, diamond_clarity: e.target.value})} className="w-full bg-[#0a0a0a] border border-white/20 p-2 focus:border-gold outline-none" /></div>
+                    <div><label className="block text-white/70 mb-1">Cut</label><input type="text" placeholder="Excellent" value={formData.diamond_cut} onChange={e => setFormData({...formData, diamond_cut: e.target.value})} className="w-full bg-[#0a0a0a] border border-white/20 p-2 focus:border-gold outline-none" /></div>
+                    <div><label className="block text-white/70 mb-1">Shape</label><input type="text" placeholder="Round Brilliant" value={formData.diamond_shape} onChange={e => setFormData({...formData, diamond_shape: e.target.value})} className="w-full bg-[#0a0a0a] border border-white/20 p-2 focus:border-gold outline-none" /></div>
+                  </div>
+                )}
+              </section>
 
-                <div>
-                  <label className="block text-gold-light font-bold mb-1 uppercase tracking-wider">
-                    Badge
+              {/* SECTION: CERTIFICATE */}
+              <section className="bg-[#181818] p-5 border border-white/5">
+                <div className="flex justify-between items-center border-b border-white/10 pb-2 mb-4">
+                  <h4 className="text-gold uppercase tracking-widest font-bold">Certification</h4>
+                  <label className="flex items-center gap-2 cursor-pointer text-white/70">
+                    <input type="checkbox" checked={formData.has_certificate} onChange={e => setFormData({...formData, has_certificate: e.target.checked})} className="accent-gold w-4 h-4" />
+                    Has Certificate
                   </label>
-                  <select
-                    value={formData.badge}
-                    onChange={(e) => setFormData({ ...formData, badge: e.target.value as any })}
-                    className="w-full bg-[#181818] border border-white/20 p-3 text-white focus:outline-none focus:border-gold"
-                  >
-                    <option value="NEW">NEW CREATION</option>
-                    <option value="BESTSELLER">BESTSELLER</option>
-                    <option value="ROYAL BRIDAL">ROYAL BRIDAL</option>
-                    <option value="EXCLUSIVE">EXCLUSIVE</option>
-                    <option value="HERITAGE TEMPLE">HERITAGE TEMPLE</option>
-                  </select>
                 </div>
-              </div>
+                {formData.has_certificate && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div><label className="block text-white/70 mb-1">Provider (IGI, GIA, BIS)</label><input type="text" value={formData.cert_provider} onChange={e => setFormData({...formData, cert_provider: e.target.value})} className="w-full bg-[#0a0a0a] border border-white/20 p-2 focus:border-gold outline-none" /></div>
+                    <div><label className="block text-white/70 mb-1">Certificate Number</label><input type="text" value={formData.cert_number} onChange={e => setFormData({...formData, cert_number: e.target.value})} className="w-full bg-[#0a0a0a] border border-white/20 p-2 focus:border-gold outline-none" /></div>
+                    <div className="md:col-span-2"><label className="block text-white/70 mb-1">Certificate URL (Verification Link / PDF)</label><input type="text" value={formData.cert_url} onChange={e => setFormData({...formData, cert_url: e.target.value})} className="w-full bg-[#0a0a0a] border border-white/20 p-2 focus:border-gold outline-none" /></div>
+                  </div>
+                )}
+              </section>
 
-              {/* Purity & Price */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-gold-light font-bold mb-1 uppercase tracking-wider">
-                    Metal Purity *
-                  </label>
-                  <select
-                    value={formData.purity}
-                    onChange={(e) => setFormData({ ...formData, purity: e.target.value })}
-                    className="w-full bg-[#181818] border border-white/20 p-3 text-white focus:outline-none focus:border-gold"
-                  >
-                    <option value="24K Gold • 99.9% Pure">24K Gold • 99.9% Pure</option>
-                    <option value="22K BIS 916 Hallmarked">22K BIS 916 Hallmarked</option>
-                    <option value="18K Solid Gold">18K Solid Gold</option>
-                    <option value="Platinum 950">Platinum 950</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-gold-light font-bold mb-1 uppercase tracking-wider">
-                    Price in INR (₹) *
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    min="1000"
-                    step="500"
-                    placeholder="125000"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-                    className="w-full bg-[#181818] border border-white/20 p-3 text-white focus:outline-none focus:border-gold"
-                  />
-                </div>
-              </div>
-
-              {/* Gold & Diamond Specs */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-gold-light font-bold mb-1 uppercase tracking-wider">
-                    Net Gold Weight (g)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 24.5g"
-                    value={formData.goldWeight}
-                    onChange={(e) => setFormData({ ...formData, goldWeight: e.target.value })}
-                    className="w-full bg-[#181818] border border-white/20 p-3 text-white focus:outline-none focus:border-gold"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gold-light font-bold mb-1 uppercase tracking-wider">
-                    Diamond Specs
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 1.85ct VVS1-EF"
-                    value={formData.diamondWeight}
-                    onChange={(e) => setFormData({ ...formData, diamondWeight: e.target.value })}
-                    className="w-full bg-[#181818] border border-white/20 p-3 text-white focus:outline-none focus:border-gold"
-                  />
-                </div>
-              </div>
-
-              {/* Choose Preset Image */}
-              <div>
-                <label className="block text-gold-light font-bold mb-1 uppercase tracking-wider">
-                  Select Jewellery Image *
-                </label>
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-2">
-                  {presetImages.map((preset) => (
-                    <button
-                      type="button"
-                      key={preset.url}
-                      onClick={() => setFormData({ ...formData, imageUrl: preset.url })}
-                      className={`aspect-square border-2 overflow-hidden ${
-                        formData.imageUrl === preset.url ? "border-gold" : "border-white/20 opacity-60 hover:opacity-100"
-                      }`}
-                    >
-                      <img src={preset.url} alt={preset.label} className="w-full h-full object-cover" />
-                    </button>
-                  ))}
-                </div>
-                <input
-                  type="text"
-                  placeholder="Or enter custom image URL: https://..."
-                  value={formData.imageUrl}
-                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                  className="w-full bg-[#181818] border border-white/20 p-2.5 text-white focus:outline-none focus:border-gold text-[11px]"
-                />
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-gold-light font-bold mb-1 uppercase tracking-wider">
-                  Description / Story
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="Describe the royal craftsmanship, gemstone setting, and hallmarking..."
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full bg-[#181818] border border-white/20 p-3 text-white focus:outline-none focus:border-gold"
-                />
-              </div>
-
-              {/* Actions */}
-              <div className="pt-4 flex justify-end gap-3 border-t border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="px-5 py-3 border border-white/20 text-white/70 hover:text-white uppercase tracking-wider font-semibold"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-8 py-3 bg-gold hover:bg-gold-light text-[#070707] font-bold uppercase tracking-widest transition-colors shadow-lg"
-                >
-                  Publish to Storefront
+              {/* ACTIONS */}
+              <div className="pt-4 flex justify-end gap-3 sticky bottom-0 bg-[#111111] py-4 border-t border-white/10">
+                <button type="button" onClick={() => setShowModal(false)} className="px-5 py-3 border border-white/20 text-white/70 hover:text-white uppercase tracking-wider font-bold">Cancel</button>
+                <button type="submit" disabled={submitting} className="px-8 py-3 bg-gold hover:bg-gold-light text-[#070707] font-bold uppercase tracking-widest transition-colors shadow-lg disabled:opacity-50">
+                  {submitting ? "Saving..." : "Save Master Product"}
                 </button>
               </div>
 
             </form>
-
           </div>
         </div>
       )}
 
+      {/* Global styling overrides for custom scrollbar inside modal */}
+      <style dangerouslySetInnerHTML={{__html: `
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #0a0a0a; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #555; }
+      `}} />
     </div>
   );
 }

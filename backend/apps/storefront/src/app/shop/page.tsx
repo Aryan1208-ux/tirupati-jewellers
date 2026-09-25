@@ -1,6 +1,7 @@
 import React from "react";
 import ProductCard from "@/components/ProductCard";
 import Link from "next/link";
+import { getStoreCategories, getStoreProducts } from "@/lib/medusa-categories";
 
 interface ShopPageProps {
   searchParams: Promise<{
@@ -9,64 +10,23 @@ interface ShopPageProps {
   }>;
 }
 
-async function getProducts() {
-  try {
-    const res = await fetch("http://localhost:9000/store/products?limit=100", {
-      next: { revalidate: 10 },
-      headers: {
-        "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "",
-      },
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.products || [];
-  } catch (err) {
-    console.error("Error fetching products:", err);
-    return [];
-  }
-}
-
 export default async function ShopPage({ searchParams }: ShopPageProps) {
   const params = await searchParams;
   const activeCategory = params.category?.toLowerCase() || "all";
   const searchQuery = params.search?.toLowerCase() || "";
 
-  const allProducts = await getProducts();
+  const [categories, filteredProducts] = await Promise.all([
+    getStoreCategories(),
+    getStoreProducts(activeCategory, searchQuery),
+  ]);
 
-  // Filter products based on category and search query
-  const filteredProducts = allProducts.filter((product: any) => {
-    const title = product.title?.toLowerCase() || "";
-    const description = product.description?.toLowerCase() || "";
-    const handle = product.handle?.toLowerCase() || "";
-
-    const matchesSearch =
-      !searchQuery ||
-      title.includes(searchQuery) ||
-      description.includes(searchQuery) ||
-      handle.includes(searchQuery);
-
-    let matchesCategory = true;
-    if (activeCategory !== "all") {
-      if (activeCategory === "rings") {
-        matchesCategory = title.includes("ring") || handle.includes("t-shirt");
-      } else if (activeCategory === "necklaces") {
-        matchesCategory = title.includes("necklace") || handle.includes("sweatshirt");
-      } else if (activeCategory === "earrings") {
-        matchesCategory = title.includes("earring") || handle.includes("sweatpants");
-      } else if (activeCategory === "bracelets") {
-        matchesCategory = title.includes("bracelet") || handle.includes("shorts");
-      }
-    }
-
-    return matchesSearch && matchesCategory;
-  });
-
-  const categories = [
+  // Dynamically create category tabs from Medusa Store API
+  const categoryTabs = [
     { label: "All Masterpieces", value: "all" },
-    { label: "Solitaire Rings", value: "rings" },
-    { label: "Chokers & Necklaces", value: "necklaces" },
-    { label: "Temple & Diamond Earrings", value: "earrings" },
-    { label: "Bracelets & Kadas", value: "bracelets" },
+    ...categories.map((cat) => ({
+      label: cat.name,
+      value: cat.handle,
+    })),
   ];
 
   return (
@@ -87,14 +47,14 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
           </p>
         </div>
 
-        {/* Luxury Category Filter Buttons */}
+        {/* Luxury Category Filter Buttons - Dynamically Populated from Medusa */}
         <div className="flex flex-wrap justify-center gap-3 mb-12 font-sans text-xs uppercase tracking-[0.18em]">
-          {categories.map((cat) => {
+          {categoryTabs.map((cat) => {
             const isActive = activeCategory === cat.value;
             return (
               <Link
                 key={cat.value}
-                href={cat.value === "all" ? "/shop" : `/shop?category=${cat.value}`}
+                href={cat.value === "all" ? "/shop" : `/shop?category=${encodeURIComponent(cat.value)}`}
                 className={`px-6 py-3 border transition-all duration-300 font-semibold ${
                   isActive
                     ? "bg-[#0a0a0a] text-gold-light border-gold shadow-lg"

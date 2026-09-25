@@ -1,12 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
-import LiveGoldRate from "@/components/LiveGoldRate";
-import { CartProvider } from "@/context/CartContext";
-import OfferPopup from "@/components/OfferPopup";
-import OfferBanner from "@/components/OfferBanner";
+import ConditionalLayout from "@/components/ConditionalLayout";
 
 export const metadata: Metadata = {
   title: "Tirupati Jewellers | Luxury Gold, Diamond & Bridal Jewellery",
@@ -29,17 +23,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full scroll-smooth">
       <body className="min-h-full flex flex-col font-serif bg-cream text-charcoal selection:bg-gold selection:text-black">
-        <CartProvider>
-          <OfferBanner />
-          <LiveGoldRate />
-          <Header />
-          <OfferPopup />
-          <main className="flex-grow">
-            {children}
-          </main>
-          <WhatsAppButton />
-          <Footer />
-        </CartProvider>
+        <ConditionalLayout>
+          {children}
+        </ConditionalLayout>
       </body>
     </html>
   );

@@ -1,198 +1,306 @@
+import { JewelleryMetadata, validateJewelleryMetadata } from "./jewellery";
+import { billingFetch } from "./billing-api";
+
+const MEDUSA_URL = "/api/medusa";
+
+export interface AdminCategory {
+  id: string;
+  name: string;
+  handle: string;
+  is_active: boolean;
+  is_internal: boolean;
+  rank: number;
+  parent_category_id: string | null;
+  category_children?: AdminCategory[];
+}
+
 export interface JewelleryProduct {
   id: string;
   title: string;
   handle: string;
-  category: "rings" | "necklaces" | "earrings" | "bracelets" | "bridal";
-  purity: string;
-  goldWeight?: string;
-  diamondWeight?: string;
+  category: string;
+  categoryId?: string;
+  
+  // New structured metadata
+  jewellery?: JewelleryMetadata;
+  
+  // Legacy or root metadata
+  badge?: string;
+  
   price: number;
-  badge: "BESTSELLER" | "ROYAL BRIDAL" | "NEW" | "EXCLUSIVE" | "HERITAGE TEMPLE";
   imageUrl: string;
   description: string;
   inStock: boolean;
   createdAt: string;
 }
 
-export const initialJewelleryProducts: JewelleryProduct[] = [
-  {
-    id: "tj-prod-001",
-    title: "Tirupati Empress Solitaire Diamond Ring",
-    handle: "empress-solitaire-diamond-ring",
-    category: "rings",
-    purity: "24K Gold • 99.9% Pure",
-    goldWeight: "6.8g",
-    diamondWeight: "1.50ct VVS1-EF",
-    price: 185000,
-    badge: "BESTSELLER",
-    imageUrl: "/image/luxury/prod_ring.jpg",
-    description: "An opulent handcrafted 24K gold ring crowned with a brilliant round solitaire diamond in a six-prong platinum crown.",
-    inStock: true,
-    createdAt: "2026-08-20T10:00:00Z"
-  },
-  {
-    id: "tj-prod-002",
-    title: "Tirupati Royal Emerald & Polki Diamond Choker",
-    handle: "royal-emerald-polki-diamond-choker",
-    category: "necklaces",
-    purity: "22K BIS 916 Hallmarked",
-    goldWeight: "54.2g",
-    diamondWeight: "4.80ct Uncut Polki",
-    price: 345000,
-    badge: "ROYAL BRIDAL",
-    imageUrl: "/image/luxury/prod_choker.jpg",
-    description: "Royal Mughal-inspired choker necklace featuring natural Zambian emeralds, uncut polki diamonds, and south sea pearl droplets.",
-    inStock: true,
-    createdAt: "2026-08-20T10:05:00Z"
-  },
-  {
-    id: "tj-prod-003",
-    title: "Tirupati Imperial Ruby & Temple Gold Jhumkas",
-    handle: "imperial-ruby-temple-gold-jhumkas",
-    category: "earrings",
-    purity: "22K BIS 916 Hallmarked",
-    goldWeight: "28.6g",
-    diamondWeight: "0.95ct Natural Diamonds",
-    price: 142000,
-    badge: "HERITAGE TEMPLE",
-    imageUrl: "/image/luxury/prod_earrings.jpg",
-    description: "Intricate South Indian temple gold jhumkas adorned with Burma rubies, floral filigree, and cascading gold bell droplets.",
-    inStock: true,
-    createdAt: "2026-08-20T10:10:00Z"
-  },
-  {
-    id: "tj-prod-004",
-    title: "Tirupati Eternal Diamond Tennis Bracelet Cuff",
-    handle: "eternal-diamond-tennis-bracelet-cuff",
-    category: "bracelets",
-    purity: "18K Solid Gold",
-    goldWeight: "19.4g",
-    diamondWeight: "3.20ct Round Cut VVS",
-    price: 215000,
-    badge: "EXCLUSIVE",
-    imageUrl: "/image/luxury/prod_bracelet.jpg",
-    description: "A continuous river of brilliant round cut diamonds set in a secure four-prong 18K yellow gold luxury tennis bracelet cuff.",
-    inStock: true,
-    createdAt: "2026-08-20T10:15:00Z"
-  },
-  {
-    id: "tj-prod-005",
-    title: "Tirupati Grand Heritage Bridal Trousseau Set",
-    handle: "grand-heritage-bridal-trousseau-set",
-    category: "bridal",
-    purity: "22K BIS 916 Hallmarked",
-    goldWeight: "118.5g",
-    diamondWeight: "8.50ct Heritage Polki",
-    price: 680000,
-    badge: "ROYAL BRIDAL",
-    imageUrl: "/image/luxury/bridal.jpg",
-    description: "The complete royal bridal set containing the layered choker, matching chandbalis, maang tikka, and solid gold kadas.",
-    inStock: true,
-    createdAt: "2026-08-20T10:20:00Z"
-  },
-  {
-    id: "tj-prod-006",
-    title: "Tirupati Majestic Navratna Gold Necklace",
-    handle: "majestic-navratna-gold-necklace",
-    category: "necklaces",
-    purity: "22K BIS 916 Hallmarked",
-    goldWeight: "42.3g",
-    diamondWeight: "1.20ct Mixed Gemstones",
-    price: 265000,
-    badge: "EXCLUSIVE",
-    imageUrl: "/image/luxury/necklaces.jpg",
-    description: "A spectacular Navratna necklace featuring nine auspicious gemstones handset in pure 22K gold, balancing astrological harmony with royal elegance.",
-    inStock: true,
-    createdAt: "2026-08-21T10:00:00Z"
-  },
-  {
-    id: "tj-prod-007",
-    title: "Tirupati Rose Gold Solitaire Danglers",
-    handle: "rose-gold-solitaire-danglers",
-    category: "earrings",
-    purity: "18K Rose Gold",
-    goldWeight: "12.5g",
-    diamondWeight: "2.15ct VVS-EF",
-    price: 185000,
-    badge: "NEW",
-    imageUrl: "/image/luxury/earrings.jpg",
-    description: "Contemporary 18K rose gold danglers featuring brilliant round solitaires that catch the light effortlessly from every angle.",
-    inStock: true,
-    createdAt: "2026-08-21T10:15:00Z"
-  },
-  {
-    id: "tj-prod-008",
-    title: "Tirupati Vintage Emerald Cut Diamond Ring",
-    handle: "vintage-emerald-cut-diamond-ring",
-    category: "rings",
-    purity: "Platinum & 18K Gold",
-    goldWeight: "8.2g",
-    diamondWeight: "3.00ct Emerald Cut",
-    price: 495000,
-    badge: "BESTSELLER",
-    imageUrl: "/image/luxury/rings.jpg",
-    description: "A breathtaking 3-carat emerald-cut diamond set in a platinum halo with an 18K gold band, offering a perfect blend of vintage charm and modern luxury.",
-    inStock: true,
-    createdAt: "2026-08-21T10:30:00Z"
-  }
-];
+/**
+ * Fetch all categories directly from Medusa Admin API.
+ */
+export async function fetchAdminCategories(): Promise<AdminCategory[]> {
+  const res = await billingFetch(`/admin/product-categories?limit=100`, {
+    cache: "no-store",
+  });
 
-const STORAGE_KEY = "tirupati_jewellers_admin_products";
-
-export function getStoredJewelleryProducts(): JewelleryProduct[] {
-  if (typeof window === "undefined") return initialJewelleryProducts;
-  const data = localStorage.getItem(STORAGE_KEY);
-  if (!data) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(initialJewelleryProducts));
-    return initialJewelleryProducts;
+  if (!res.ok) {
+    console.error(`Categories request failed with status ${res.status}`);
+    return [];
   }
+
+  const data = await res.json();
+  return data.product_categories || [];
+}
+
+/**
+ * Fetch all products directly from Medusa Admin API with expanded relations.
+ */
+export async function fetchAdminProducts(): Promise<JewelleryProduct[]> {
+  const res = await billingFetch(
+    `/admin/products?limit=100&fields=*categories,*variants,*variants.prices,*sales_channels`,
+    {
+      cache: "no-store",
+    }
+  );
+
+  if (!res.ok) {
+    console.error(`Products request failed with status ${res.status}`);
+    return [];
+  }
+
+  const data = await res.json();
+  return (data.products || []).map(mapMedusaProductToJewelleryProduct);
+}
+
+/**
+ * Fetch a single product from Medusa Admin API.
+ */
+export async function fetchAdminProduct(id: string): Promise<JewelleryProduct | null> {
+  const res = await billingFetch(
+    `/admin/products/${id}?fields=*categories,*variants,*variants.prices,*sales_channels`,
+    {
+      cache: "no-store",
+    }
+  );
+
+  if (!res.ok) return null;
+  const data = await res.json();
+  return mapMedusaProductToJewelleryProduct(data.product);
+}
+
+async function getDefaultSalesChannelId(): Promise<string | null> {
   try {
-    const parsed = JSON.parse(data);
-    let currentProducts = Array.isArray(parsed) && parsed.length > 0 ? parsed : initialJewelleryProducts;
-    
-    // Merge any new hardcoded products that might have been added to initialJewelleryProducts
-    // but are missing from localStorage (based on ID)
-    let needsUpdate = false;
-    initialJewelleryProducts.forEach(initialProd => {
-      if (!currentProducts.find((p: JewelleryProduct) => p.id === initialProd.id)) {
-        currentProducts.push(initialProd);
-        needsUpdate = true;
-      }
-    });
+    const res = await billingFetch(`/admin/sales-channels?limit=1`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.sales_channels?.[0]?.id || null;
+  } catch {
+    return null;
+  }
+}
 
-    if (needsUpdate) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(currentProducts));
+/**
+ * Create a new fine jewellery product in Medusa backend via Admin API.
+ */
+export async function createAdminProduct(
+  productData: {
+    title: string;
+    categoryId?: string;
+    price: number;
+    badge?: string;
+    imageUrl?: string;
+    description?: string;
+    jewellery?: JewelleryMetadata;
+  }
+): Promise<{ success: boolean; product?: any; error?: string }> {
+  try {
+    const salesChannelId = await getDefaultSalesChannelId();
+
+    const metadata: Record<string, any> = {};
+    if (productData.badge) metadata.badge = productData.badge;
+    if (productData.jewellery) {
+      metadata.jewellery = validateJewelleryMetadata(productData.jewellery);
     }
 
-    return currentProducts;
-  } catch (e) {
-    return initialJewelleryProducts;
+    const payload: Record<string, any> = {
+      title: productData.title.trim(),
+      status: "published",
+      description: productData.description || "",
+      thumbnail: productData.imageUrl || "",
+      metadata,
+      options: [{ title: "Standard", values: ["Default"] }],
+      variants: [
+        {
+          title: "Default",
+          options: { Standard: "Default" },
+          prices: [{ amount: Number(productData.price), currency_code: "inr" }],
+        },
+      ],
+      categories: productData.categoryId ? [{ id: productData.categoryId }] : [],
+    };
+
+    if (salesChannelId) {
+      payload.sales_channels = [{ id: salesChannelId }];
+    }
+
+    const res = await billingFetch(`/admin/products`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      return { success: false, error: errData.message || `Failed to create product (Status ${res.status})` };
+    }
+
+    const data = await res.json();
+    return { success: true, product: data.product };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Network error while creating product" };
   }
 }
 
-export function saveJewelleryProducts(products: JewelleryProduct[]): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+/**
+ * Update a product in Medusa backend, carefully merging metadata.
+ */
+export async function updateAdminProduct(
+  id: string,
+  productData: {
+    title?: string;
+    categoryId?: string;
+    price?: number;
+    badge?: string;
+    imageUrl?: string;
+    description?: string;
+    jewellery?: JewelleryMetadata;
+  }
+): Promise<{ success: boolean; product?: any; error?: string }> {
+  try {
+    // 1. Load current Medusa product to preserve metadata
+    const getRes = await billingFetch(`/admin/products/${id}`);
+    if (!getRes.ok) return { success: false, error: "Failed to load existing product for update." };
+    const currentProduct = (await getRes.json()).product;
+
+    // 2. Merge metadata carefully
+    const newMetadata = { ...(currentProduct.metadata || {}) };
+    if (productData.badge !== undefined) newMetadata.badge = productData.badge;
+    if (productData.jewellery !== undefined) {
+      if (productData.jewellery === null) {
+        delete newMetadata.jewellery;
+      } else {
+        newMetadata.jewellery = validateJewelleryMetadata(productData.jewellery);
+      }
+    }
+
+    // 3. Build payload
+    const payload: Record<string, any> = {
+      metadata: newMetadata,
+    };
+    if (productData.title) payload.title = productData.title.trim();
+    if (productData.description !== undefined) payload.description = productData.description;
+    if (productData.imageUrl !== undefined) payload.thumbnail = productData.imageUrl;
+    if (productData.categoryId !== undefined) {
+      payload.categories = productData.categoryId ? [{ id: productData.categoryId }] : [];
+    }
+
+    // 4. Save to Medusa
+    const res = await billingFetch(`/admin/products/${id}`, {
+      method: "POST", // Medusa v2 updates via POST /admin/products/:id
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      return { success: false, error: errData.message || `Failed to update product (Status ${res.status})` };
+    }
+
+    const updatedData = await res.json();
+
+    // 5. Update price if necessary
+    if (productData.price !== undefined && currentProduct.variants?.length > 0) {
+      const variantId = currentProduct.variants[0].id;
+      // We must update the variant price
+      // This is simplified; Medusa 2.0 requires updating the price list or variant price directly
+      // In a real flow, we'd hit /admin/products/:id/variants/:var_id
+      await billingFetch(`/admin/products/${id}/variants/${variantId}`, {
+        method: "POST",
+        body: JSON.stringify({
+          prices: [{ amount: Number(productData.price), currency_code: "inr" }],
+        }),
+      });
+    }
+
+    return { success: true, product: updatedData.product };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Network error while updating product" };
+  }
 }
 
-export function addJewelleryProduct(product: Omit<JewelleryProduct, "id" | "handle" | "createdAt">): JewelleryProduct {
-  const products = getStoredJewelleryProducts();
-  const slug = product.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-  const newProduct: JewelleryProduct = {
-    ...product,
-    id: "tj-prod-" + Date.now(),
-    handle: slug + "-" + Math.floor(100 + Math.random() * 900),
-    createdAt: new Date().toISOString()
+export async function deleteAdminProduct(id: string): Promise<boolean> {
+  try {
+    const res = await billingFetch(`/admin/products/${id}`, {
+      method: "DELETE",
+    });
+    return res.ok;
+  } catch (err) {
+    console.error("Failed to delete product from Medusa:", err);
+    return false;
+  }
+}
+
+function mapMedusaProductToJewelleryProduct(p: any): JewelleryProduct {
+  const categoryObj = p.categories?.[0];
+  const variant = p.variants?.[0];
+  const price = variant?.prices?.[0]?.amount ?? variant?.calculated_price?.calculated_amount ?? 0;
+  
+  let imageUrl = p.thumbnail || p.images?.[0]?.url || "";
+
+  // Parse legacy and new metadata
+  // Phase 16 / Phase 22: DO NOT guess missing metadata! Do not fall back to hardcoded jewellery values!
+  // We strictly parse `p.metadata.jewellery` or map legacy `gold_weight` into the structure as a controlled read-only migration view.
+  const rawMeta = p.metadata || {};
+  let jewellery: JewelleryMetadata | undefined = rawMeta.jewellery;
+
+  if (!jewellery) {
+    // Phase 6: Legacy migration interpretation.
+    // If there is legacy gold_weight or purity, we project it into the new format for display,
+    // but we don't save it until the Admin edits the product.
+    const hasLegacy = rawMeta.purity || rawMeta.gold_weight || rawMeta.diamond_weight;
+    if (hasLegacy) {
+      jewellery = {
+        schema_version: 1,
+        purity: rawMeta.purity ? String(rawMeta.purity) : undefined,
+      };
+      
+      // Attempt to parse legacy "15.0g" into numbers safely without guessing
+      if (rawMeta.gold_weight) {
+        const gwStr = String(rawMeta.gold_weight).replace(/[^\d.]/g, '');
+        const gw = Number(gwStr);
+        if (!isNaN(gw) && gw > 0) jewellery.gross_weight_g = gw;
+      }
+
+      if (rawMeta.diamond_weight) {
+        jewellery.diamond = {
+          // If diamond_weight was "1.50ct VVS1-EF", we just store the whole string in a legacy display or ignore carat
+          // We can't parse carat safely, so we omit carat to avoid corrupting data
+        };
+      }
+    }
+  }
+
+  return {
+    id: p.id,
+    title: p.title || "Untitled Product",
+    handle: p.handle || "",
+    category: categoryObj?.name || "Uncategorized",
+    categoryId: categoryObj?.id,
+    
+    jewellery: jewellery,
+    badge: rawMeta.badge,
+    
+    price: Number(price),
+    imageUrl: imageUrl,
+    description: p.description || "",
+    inStock: true,
+    createdAt: p.created_at || new Date().toISOString(),
   };
-  const updated = [newProduct, ...products];
-  saveJewelleryProducts(updated);
-  return newProduct;
-}
-
-export function deleteJewelleryProduct(id: string): boolean {
-  const products = getStoredJewelleryProducts();
-  const filtered = products.filter(p => p.id !== id);
-  if (filtered.length === products.length) return false;
-  saveJewelleryProducts(filtered);
-  return true;
 }

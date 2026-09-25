@@ -1,22 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { useCart } from "@/context/CartContext";
 import Link from "next/link";
+import SmartCoupons from "@/components/SmartCoupons";
 
 export default function CartPage() {
-  const { cart, loading, updateLineItem, removeItem, addPromotion, removePromotion } = useCart();
-  const [couponCode, setCouponCode] = useState("");
-  const [couponError, setCouponError] = useState("");
-  const [applyingCoupon, setApplyingCoupon] = useState(false);
+  const { cart, loading, updateLineItem, removeItem } = useCart();
 
   const items = cart?.items || [];
   
   // Medusa cart totals
-  const subtotal = cart?.subtotal ?? items.reduce(
-    (sum: number, item: any) => sum + (item.unit_price || 85000) * item.quantity,
+  const subtotal = cart?.subtotal ?? (cart?.items?.reduce(
+    (sum: number, item: any) => sum + (item.unit_price || 0) * item.quantity,
     0
-  );
+  ) || 0);
   const discountTotal = cart?.discount_total ?? 0;
   const grandTotal = cart?.total ?? (subtotal - discountTotal);
 
@@ -34,27 +32,7 @@ export default function CartPage() {
   const formattedDiscount = formatCurrency(discountTotal);
   const formattedTotal = formatCurrency(grandTotal);
 
-  const handleApplyCoupon = async () => {
-    if (!couponCode.trim()) return;
-    setApplyingCoupon(true);
-    setCouponError("");
-    try {
-      await addPromotion(couponCode.trim());
-      setCouponCode("");
-    } catch (err: any) {
-      setCouponError(err?.message || "This coupon is invalid or has expired.");
-    } finally {
-      setApplyingCoupon(false);
-    }
-  };
 
-  const handleRemoveCoupon = async (code: string) => {
-    try {
-      await removePromotion(code);
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   if (loading && !cart) {
     return (
@@ -99,8 +77,10 @@ export default function CartPage() {
             {/* Cart Items List */}
             <div className="lg:col-span-2 space-y-4">
               {items.map((item: any) => {
-                const itemTotal = (item.unit_price || 85000) * item.quantity;
-                const formattedItemPrice = formatCurrency(itemTotal);
+                const itemTotal = (item.unit_price || 0) * item.quantity;
+                const formattedItemPrice = item.unit_price === undefined || item.unit_price === null
+                  ? "Price Unavailable"
+                  : formatCurrency(itemTotal);
 
                 let img = "/image/luxury/prod_ring.jpg";
                 let displayTitle = item.title;
@@ -181,47 +161,9 @@ export default function CartPage() {
                 Order Treasury
               </h2>
 
-              {/* Coupon Section */}
+              {/* Smart Coupons & Available Offers Section */}
               <div className="mb-6 pb-6 border-b border-cream-dark">
-                <label className="block font-sans text-xs font-semibold text-charcoal mb-2 uppercase tracking-wider">
-                  Apply Privilege Code
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={couponCode}
-                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                    placeholder="Enter code"
-                    className="flex-1 border border-cream-dark px-3 py-2 font-sans text-sm focus:outline-none focus:border-gold"
-                  />
-                  <button
-                    onClick={handleApplyCoupon}
-                    disabled={applyingCoupon || !couponCode.trim()}
-                    className="bg-charcoal text-gold px-4 py-2 font-sans text-xs font-bold tracking-widest disabled:opacity-50"
-                  >
-                    {applyingCoupon ? "..." : "APPLY"}
-                  </button>
-                </div>
-                {couponError && <p className="text-red-700 text-xs mt-2 font-sans">{couponError}</p>}
-                
-                {/* Active Promotions */}
-                {cart?.promotions?.length > 0 && (
-                  <div className="mt-4 space-y-2">
-                    {cart.promotions.map((promo: any) => (
-                      <div key={promo.id} className="flex justify-between items-center bg-cream px-3 py-2 border border-gold/30">
-                        <span className="font-sans text-xs font-bold text-gold-dark uppercase flex items-center gap-2">
-                          <span className="text-sm">🏷</span> {promo.code}
-                        </span>
-                        <button
-                          onClick={() => handleRemoveCoupon(promo.code)}
-                          className="text-charcoal hover:text-red-700 text-xs font-sans underline"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <SmartCoupons />
               </div>
 
               <div className="space-y-4 font-sans text-xs text-charcoal/80 mb-6">

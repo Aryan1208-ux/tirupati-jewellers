@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { isAdminAuthenticated, getAdminUser } from "@/lib/admin-auth";
 
-const MEDUSA_URL = process.env.NEXT_PUBLIC_MEDUSA_URL || "http://localhost:9000";
+import { billingFetch } from "@/lib/billing-api";
 
 export default function BillingDashboardPage() {
   const router = useRouter();
@@ -25,8 +25,8 @@ export default function BillingDashboardPage() {
   const fetchData = async () => {
     try {
       const [invRes, dashRes] = await Promise.all([
-        fetch(`${MEDUSA_URL}/admin/billing/invoices`),
-        fetch(`${MEDUSA_URL}/admin/billing/dashboard`),
+        billingFetch("/admin/billing/invoices"),
+        billingFetch("/admin/billing/dashboard"),
       ]);
       if (invRes.ok) {
         const data = await invRes.json();
@@ -60,31 +60,6 @@ export default function BillingDashboardPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
 
-      {/* Header */}
-      <header className="bg-[#111111] border-b border-gold/30 px-4 sm:px-8 py-4 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl text-gold">👑</span>
-          <div>
-            <h1 className="font-display text-lg sm:text-xl font-bold tracking-[0.2em] text-white">
-              TIRUPATI JEWELLERS
-            </h1>
-            <p className="font-sans text-[9px] uppercase tracking-[0.35em] text-gold font-semibold">
-              OFFLINE BILLING / POS
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4 flex-wrap">
-          {adminUser && (
-            <span className="text-[10px] font-sans text-white/40 uppercase tracking-wider hidden sm:block">
-              {adminUser}
-            </span>
-          )}
-          <Link href="/admin" className="text-xs font-sans text-white/70 hover:text-gold uppercase tracking-wider">
-            ← Admin Dashboard
-          </Link>
-        </div>
-      </header>
-
       {/* Backend offline warning */}
       {!backendOnline && (
         <div className="bg-red-950/60 border-b border-red-700/40 px-4 sm:px-8 py-3 text-red-200 text-xs">
@@ -102,8 +77,9 @@ export default function BillingDashboardPage() {
         </div>
 
         {/* Navigation Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-10">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-10">
           <NavCard href="/admin/billing/create" icon="🧾" label="Create New Bill" accent />
+          <NavCard href="/admin/billing/estimates" icon="📝" label="Estimates" />
           <NavCard href="/admin/billing/customers" icon="👥" label="Customer Directory" />
           <NavCard href="/admin/billing/history" icon="📋" label="Bill History" />
           <NavCard href="/admin/billing/pending" icon="⏳" label="Pending Payments" />

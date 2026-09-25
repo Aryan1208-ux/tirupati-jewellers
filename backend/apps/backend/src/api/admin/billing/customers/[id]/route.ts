@@ -13,7 +13,7 @@ export async function GET(
     const [customer] = await billingModule.listBillingCustomers(
       { id },
       {
-        relations: ["invoices", "invoices.items", "payments", "notes", "follow_ups", "message_logs"],
+        relations: ["invoices", "invoices.items", "payments", "notes", "follow_ups", "message_logs", "estimates", "greetings"],
       }
     )
 
@@ -61,6 +61,8 @@ export async function GET(
         notes: sortedNotes,
         follow_ups: sortedFollowUps,
         message_logs: sortedMessages,
+        estimates: customer.estimates || [],
+        greetings: customer.greetings || [],
       },
       summary: {
         total_purchases: totalPurchases,
@@ -87,6 +89,8 @@ export async function PUT(
     const {
       name, mobile, email, address, city, state, state_code,
       pin_code, gstin, customer_type, status,
+      date_of_birth, anniversary_date, preferred_greeting_language,
+      greeting_opt_in, whatsapp_opt_in, sms_opt_in, email_opt_in
     } = req.body as any
 
     const updated = await billingModule.updateBillingCustomers({
@@ -102,6 +106,13 @@ export async function PUT(
       ...(gstin !== undefined && { gstin }),
       ...(customer_type !== undefined && { customer_type }),
       ...(status !== undefined && { status }),
+      ...(date_of_birth !== undefined && { date_of_birth }),
+      ...(anniversary_date !== undefined && { anniversary_date }),
+      ...(preferred_greeting_language !== undefined && { preferred_greeting_language }),
+      ...(greeting_opt_in !== undefined && { greeting_opt_in }),
+      ...(whatsapp_opt_in !== undefined && { whatsapp_opt_in }),
+      ...(sms_opt_in !== undefined && { sms_opt_in }),
+      ...(email_opt_in !== undefined && { email_opt_in }),
     })
 
     res.json({ customer: updated })
@@ -111,4 +122,4 @@ export async function PUT(
   }
 }
 
-export const AUTHENTICATE = false;
+// Admin authentication enforced by Medusa default for /admin/* routes.

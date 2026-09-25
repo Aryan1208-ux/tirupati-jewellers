@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
+import { billingFetch } from "@/lib/billing-api";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 
 const MEDUSA_URL = process.env.NEXT_PUBLIC_MEDUSA_URL || "http://localhost:9000";
@@ -44,6 +45,8 @@ function BillingHistoryInner() {
   const [backendOnline, setBackendOnline] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("ALL");
+  const [generatingIrn, setGeneratingIrn] = useState<string | null>(null);
+  const [cancellingIrn, setCancellingIrn] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAdminAuthenticated()) {
@@ -57,8 +60,8 @@ function BillingHistoryInner() {
     setLoading(true);
     try {
       const [invRes, setRes] = await Promise.all([
-        fetch(`${MEDUSA_URL}/admin/billing/invoices`),
-        fetch(`${MEDUSA_URL}/admin/billing/settings`),
+        billingFetch(`/admin/billing/invoices`),
+        billingFetch(`/admin/billing/settings`),
       ]);
       if (invRes.ok) {
         const data = await invRes.json();
@@ -91,6 +94,51 @@ function BillingHistoryInner() {
       `Dear ${inv.customer_name},\n\nThank you for your purchase at ${settings?.business_name || "Tirupati Jewellers"}.\n\nInvoice No: ${inv.invoice_number}\nDate: ${new Date(inv.created_at).toLocaleDateString("en-IN")}\nAmount: ₹${Number(inv.grand_total).toLocaleString("en-IN")}\nStatus: ${inv.payment_status}\n\nFor any queries, contact us at ${settings?.phone || "+91 94310 02445"}.\n\nThank you!`
     );
     window.open(`https://wa.me/?text=${text}`, "_blank");
+  };
+
+  const handleGenerateIRN = async (id: string) => {
+    if (!confirm("Are you sure you want to generate the E-Invoice? This will submit data to the IRP.")) return;
+    setGeneratingIrn(id);
+    try {
+      const res = await billingFetch(`/admin/billing/invoices/${id}/generate-irn`, { method: "POST" });
+      if (res.ok) {
+        alert("E-Invoice generated successfully!");
+        fetchData();
+      } else {
+        const err = await res.json();
+        alert(`Failed: ${err.error}\n${err.details ? JSON.stringify(err.details) : ""}`);
+      }
+    } catch (e: any) {
+      alert("Error: " + e.message);
+    } finally {
+      setGeneratingIrn(null);
+    }
+  };
+
+  const handleCancelIRN = async (id: string) => {
+    const reason = prompt("Enter Cancel Reason Code (1: Duplicate, 2: Data Entry Mistake, 3: Order Cancelled, 4: Other):", "1");
+    if (!reason) return;
+    const remark = prompt("Enter Cancel Remark:");
+    
+    setCancellingIrn(id);
+    try {
+      const res = await billingFetch(`/admin/billing/invoices/${id}/cancel-irn`, { 
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cancel_reason: reason, cancel_remark: remark })
+      });
+      if (res.ok) {
+        alert("E-Invoice cancelled successfully!");
+        fetchData();
+      } else {
+        const err = await res.json();
+        alert(`Failed: ${err.error}\n${err.details ? JSON.stringify(err.details) : ""}`);
+      }
+    } catch (e: any) {
+      alert("Error: " + e.message);
+    } finally {
+      setCancellingIrn(null);
+    }
   };
 
   const filteredInvoices = invoices.filter(inv => {
@@ -173,7 +221,7 @@ function BillingHistoryInner() {
 
               {/* Header */}
               <div className="flex justify-between items-start pb-5 mb-5 border-b-2 border-black">
-                <div>
+                <div className="flex-1">
                   <h1 className="font-serif text-2xl font-bold tracking-widest uppercase mb-0.5">
                     {settings?.business_name || "TIRUPATI JEWELLERS"}
                   </h1>
@@ -188,6 +236,7 @@ function BillingHistoryInner() {
                   {settings?.phone && <p className="text-[11px] text-gray-700">Ph: {settings.phone}</p>}
                   {settings?.email && <p className="text-[11px] text-gray-700">Email: {settings.email}</p>}
                 </div>
+
                 <div className="text-right">
                   {settings?.gstin && (
                     <p className="text-[11px] font-bold">GSTIN: {settings.gstin}</p>
@@ -201,10 +250,12 @@ function BillingHistoryInner() {
                 </div>
               </div>
 
+
+
               {/* Tax Invoice Label */}
               <div className="flex justify-center mb-6">
                 <div className="border-2 border-black px-8 py-1.5 text-center">
-                  <span className="font-bold uppercase tracking-[0.35em] text-sm">Tax Invoice</span>
+                  <span className="font-bold uppercase tracking-[0.35em] text-sm">GST TAX INVOICE</span>
                 </div>
               </div>
 
@@ -314,7 +365,7 @@ function BillingHistoryInner() {
                   )}
 
                   <div className="mt-4 p-2 bg-gray-50 border border-gray-200 text-[9px] text-gray-500">
-                    ⚠ This is a computer-generated tax invoice. Not an e-invoice / IRN.
+                    ✓ This is a computer-generated tax invoice.
                   </div>
                 </div>
 
@@ -340,6 +391,15 @@ function BillingHistoryInner() {
                   </div>
                 </div>
               </div>
+
+              {/* Festival Greeting Snapshot */}
+              {inv.festival_greeting_text && (
+                <div className="mt-4 p-3 bg-[#FCFBF8] border border-[#F2EFE8] rounded text-center shadow-sm">
+                  <p className="text-[11px] font-serif italic text-gray-700 tracking-wide">
+                    {inv.festival_greeting_text}
+                  </p>
+                </div>
+              )}
 
               {/* Signatures */}
               <div className="flex justify-between items-end mt-12 pt-4 px-4">
@@ -463,7 +523,7 @@ function BillingHistoryInner() {
                   <td className="py-3 px-5 text-center">
                     <StatusBadge status={inv.payment_status} />
                   </td>
-                  <td className="py-3 px-5 text-center">
+                  <td className="py-3 px-5 flex flex-col gap-2 items-center justify-center">
                     <Link
                       href={`/admin/billing/history?id=${inv.id}`}
                       className="text-gold-light hover:text-white underline uppercase tracking-widest text-[10px]"

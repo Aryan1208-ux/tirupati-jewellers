@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { billingFetch } from "@/lib/billing-api";
 import { isAdminAuthenticated, getAdminUser } from "@/lib/admin-auth";
 
 const MEDUSA_URL = process.env.NEXT_PUBLIC_MEDUSA_URL || "http://localhost:9000";
@@ -26,7 +27,7 @@ export default function PendingPaymentsPage() {
   const fetchPending = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${MEDUSA_URL}/admin/billing/pending`);
+      const res = await billingFetch(`/admin/billing/pending`);
       if (res.ok) {
         const data = await res.json();
         setInvoices(data.invoices || []);
@@ -188,7 +189,7 @@ function QuickPayModal({ invoice, fmtCur, onClose, onPaid }: any) {
     setError("");
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_MEDUSA_URL || "http://localhost:9000"}/admin/billing/payments`,
+        `/api/medusa/admin/billing/payments`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

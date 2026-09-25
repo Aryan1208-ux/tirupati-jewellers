@@ -6,6 +6,8 @@ import { medusa } from "@/lib/medusa";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Script from "next/script";
+import SmartCoupons from "@/components/SmartCoupons";
+import { trackActivity } from "@/lib/activity";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -22,6 +24,13 @@ export default function CheckoutPage() {
     phone: "",
     paymentMethod: "cod",
   });
+
+  React.useEffect(() => {
+    trackActivity({
+      event_type: "CHECKOUT_STARTED",
+      metadata: { cart_id: cart?.id },
+    });
+  }, [cart?.id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -52,16 +61,26 @@ export default function CheckoutPage() {
         console.warn("Notice updating cart metadata:", err);
       }
 
+      // Add default shipping method so payment collection can be initiated
+      try {
+        const fulfillmentRes = await (medusa.store as any).fulfillment.listCartOptions({ cart_id: cart.id });
+        const options = fulfillmentRes.shipping_options || [];
+        if (options.length > 0) {
+          await medusa.store.cart.addShippingMethod(cart.id, { option_id: options[0].id });
+        }
+      } catch (err) {
+        console.warn("Notice adding shipping method:", err);
+      }
+
       const items = cart?.items || [];
-      const subtotal = cart?.subtotal ?? items.reduce((sum: number, item: any) => sum + (item.unit_price || 15000) * item.quantity, 0);
+      const subtotal = cart?.subtotal ?? items.reduce((sum: number, item: any) => sum + (item.unit_price || 0) * item.quantity, 0);
       const discountTotal = cart?.discount_total ?? 0;
       const grandTotal = cart?.total ?? (subtotal - discountTotal);
 
       if (formData.paymentMethod === "online") {
         let orderId = "";
         try {
-          // Initialize payment session with Medusa to get Razorpay order ID
-          // Fallback to dummy ID if API is not fully configured yet
+          await medusa.store.payment.initiatePaymentSession(cart, { provider_id: "razorpay" });
           orderId = "order_" + Date.now(); 
         } catch (err) {
           orderId = "order_dummy123";
@@ -69,7 +88,7 @@ export default function CheckoutPage() {
 
         const options = {
           key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_dummykey",
-          amount: Math.round(grandTotal),
+          amount: Math.round(grandTotal * 100),
           currency: cart.currency_code?.toUpperCase() || "INR",
           name: "Tirupati Jewellers",
           description: "Fine Jewellery Purchase",
@@ -86,8 +105,21 @@ export default function CheckoutPage() {
               if (!verifyRes.ok) throw new Error("Payment verification failed");
               
               // Proceed to complete cart
+              let finalOrderId = cart.id;
+              try {
+                const completeRes = await medusa.store.cart.complete(cart.id);
+                if (completeRes && completeRes.type === "order" && completeRes.order) {
+                  finalOrderId = completeRes.order.id;
+                }
+              } catch (err) {
+                console.error("Cart completion failed after Razorpay verify", err);
+              }
               localStorage.removeItem("medusa_cart_id");
-              router.push(`/order-confirmation?order_id=${cart.id}&name=${encodeURIComponent(formData.firstName)}`);
+              trackActivity({
+                event_type: "ORDER_PLACED",
+                metadata: { order_id: finalOrderId, payment_method: "online" }
+              });
+              router.push(`/order-confirmation?order_id=${finalOrderId}&name=${encodeURIComponent(formData.firstName)}`);
             } catch (err) {
               alert("Payment verification failed. Please contact support.");
               setSubmitting(false);
@@ -108,8 +140,28 @@ export default function CheckoutPage() {
       }
 
       // COD Flow
+      try {
+        await medusa.store.payment.initiatePaymentSession(cart, { provider_id: "pp_system_default" });
+      } catch (err) {
+        console.warn("Failed to initiate COD session", err);
+      }
+      
+      let finalOrderId = cart.id;
+      try {
+        const completeRes = await medusa.store.cart.complete(cart.id);
+        if (completeRes && completeRes.type === "order" && completeRes.order) {
+          finalOrderId = completeRes.order.id;
+        }
+      } catch (err) {
+        console.error("Cart completion failed for COD", err);
+      }
+
       localStorage.removeItem("medusa_cart_id");
-      router.push(`/order-confirmation?order_id=${cart.id}&name=${encodeURIComponent(formData.firstName)}`);
+      trackActivity({
+        event_type: "ORDER_PLACED",
+        metadata: { order_id: finalOrderId, payment_method: "cod" }
+      });
+      router.push(`/order-confirmation?order_id=${finalOrderId}&name=${encodeURIComponent(formData.firstName)}`);
     } catch (error) {
       console.error("Error completing checkout:", error);
       alert("There was an issue processing your order. Please try again.");
@@ -119,7 +171,7 @@ export default function CheckoutPage() {
 
   const items = cart?.items || [];
   const subtotal = cart?.subtotal ?? items.reduce(
-    (sum: number, item: any) => sum + (item.unit_price || 15000) * item.quantity,
+    (sum: number, item: any) => sum + (item.unit_price || 0) * item.quantity,
     0
   );
   const discountTotal = cart?.discount_total ?? 0;
@@ -135,8 +187,10 @@ export default function CheckoutPage() {
     }).format(amount * multiplier);
   };
 
+  const shippingTotal = cart?.shipping_total ?? 0;
   const formattedSubtotal = formatCurrency(subtotal);
   const formattedDiscount = formatCurrency(discountTotal);
+  const formattedShipping = formatCurrency(shippingTotal);
   const formattedTotal = formatCurrency(grandTotal);
 
   if (loading && !cart) {
@@ -343,16 +397,7 @@ export default function CheckoutPage() {
             <div className="divide-y divide-cream-dark mb-6 max-h-60 overflow-y-auto">
               {items.map((item: any) => {
                 let displayTitle = item.title;
-                const lowerTitle = (item.title || "").toLowerCase();
-                if (lowerTitle.includes("t-shirt")) {
-                  displayTitle = "Tirupati Empress Solitaire Diamond Ring";
-                } else if (lowerTitle.includes("necklace") || lowerTitle.includes("sweatshirt")) {
-                  displayTitle = "Tirupati Royal Emerald & Polki Diamond Choker";
-                } else if (lowerTitle.includes("earring") || lowerTitle.includes("sweatpants")) {
-                  displayTitle = "Tirupati Imperial Ruby & Temple Gold Jhumkas";
-                } else if (lowerTitle.includes("bracelet") || lowerTitle.includes("shorts")) {
-                  displayTitle = "Tirupati Eternal Diamond Tennis Bracelet Cuff";
-                }
+
 
                 return (
                   <div key={item.id} className="py-3 flex justify-between items-center text-xs font-sans">
@@ -361,11 +406,16 @@ export default function CheckoutPage() {
                       <p className="text-charcoal-light">Qty: {item.quantity}</p>
                     </div>
                     <span className="font-medium text-charcoal">
-                      {formatCurrency((item.unit_price || 15000) * item.quantity)}
+                      {item.unit_price === undefined || item.unit_price === null ? "Price Unavailable" : formatCurrency(item.unit_price * item.quantity)}
                     </span>
                   </div>
                 );
               })}
+            </div>
+
+            {/* Smart Coupons & Available Offers Section */}
+            <div className="my-6 pt-4 border-t border-cream-dark">
+              <SmartCoupons />
             </div>
 
             <div className="space-y-3 font-sans text-xs text-charcoal/80 mb-6 pt-4 border-t border-cream-dark">
@@ -381,7 +431,11 @@ export default function CheckoutPage() {
               )}
               <div className="flex justify-between">
                 <span>Insured Delivery</span>
-                <span className="text-green-700 font-semibold">FREE</span>
+                {shippingTotal === 0 ? (
+                  <span className="text-green-700 font-semibold">FREE</span>
+                ) : (
+                  <span className="font-semibold text-charcoal">{formattedShipping}</span>
+                )}
               </div>
               <div className="border-t border-cream-dark pt-3 flex justify-between text-base font-serif text-charcoal font-semibold">
                 <span>Total Amount</span>

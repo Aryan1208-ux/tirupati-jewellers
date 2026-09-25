@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+import { loginAdmin } from "@/lib/admin-auth";
+
 export default function AdminLoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -11,31 +13,18 @@ export default function AdminLoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    // Verify credentials (support standard admin or custom entered)
-    setTimeout(() => {
-      if (
-        (email.trim().toLowerCase() === "tjewellers13@gmail.com" && password === "9431002445@Tjewels.") ||
-        (email.includes("@") && password.length >= 4)
-      ) {
-        localStorage.setItem("tj_admin_authenticated", "true");
-        localStorage.setItem("tj_admin_user", email);
-        router.push("/admin");
-      } else {
-        setError("Invalid email or password. Please try again or use the demo login.");
-        setLoading(false);
-      }
-    }, 600);
-  };
-
-  const handleDemoFill = () => {
-    setEmail("Tjewellers13@gmail.com");
-    setPassword("9431002445@Tjewels.");
-    setError("");
+    const result = await loginAdmin(email, password);
+    if (result.success) {
+      router.push("/admin");
+    } else {
+      setError(result.error || "Invalid email or password. Please try again.");
+      setLoading(false);
+    }
   };
 
   return (
@@ -68,7 +57,7 @@ export default function AdminLoginPage() {
               Sign In to Jewellery Manager
             </h2>
             <p className="font-sans text-xs text-white/50 mt-1">
-              Add and manage gold, diamonds & bridal suites live on the storefront.
+              Add and manage gold, diamonds &amp; bridal suites live on the storefront.
             </p>
           </div>
 
@@ -88,7 +77,7 @@ export default function AdminLoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Tjewellers13@gmail.com"
+                placeholder="admin@example.com"
                 className="w-full bg-[#181818] border border-white/20 px-4 py-3 text-white text-xs font-sans focus:outline-none focus:border-gold"
               />
             </div>
@@ -115,20 +104,6 @@ export default function AdminLoginPage() {
               {loading ? "AUTHENTICATING..." : "ENTER ADMIN PORTAL"}
             </button>
           </form>
-
-          {/* Quick Demo Login Credentials */}
-          <div className="mt-8 pt-6 border-t border-white/10 text-center">
-            <button
-              type="button"
-              onClick={handleDemoFill}
-              className="font-sans text-xs text-gold-light hover:text-white underline tracking-wider"
-            >
-              ⚡ Click here to auto-fill Admin Credentials
-            </button>
-            <div className="mt-2 text-[10px] font-mono text-white/40">
-              Tjewellers13@gmail.com / 9431002445@Tjewels.
-            </div>
-          </div>
 
         </div>
 

@@ -49,25 +49,21 @@ export default function Header() {
               <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-gold transition-all duration-300 group-hover:w-full"></span>
             </Link>
             <Link href="/shop" className="relative py-2 text-white/90 hover:text-gold transition-colors duration-300 group">
-              Jewellery Collection
+              Shop
               <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-gold transition-all duration-300 group-hover:w-full"></span>
             </Link>
             <a href="/#collections" className="relative py-2 text-white/90 hover:text-gold transition-colors duration-300 group">
               Collections
               <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-gold transition-all duration-300 group-hover:w-full"></span>
             </a>
-            <a href="/#bridal" className="relative py-2 text-white/90 hover:text-gold transition-colors duration-300 group">
-              Bridal Trousseau
+            <Link href="/about" className="relative py-2 text-white/90 hover:text-gold transition-colors duration-300 group">
+              About Us
               <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-gold transition-all duration-300 group-hover:w-full"></span>
-            </a>
-            <a href="/#video-shopping" className="relative py-2 text-white/90 hover:text-gold transition-colors duration-300 group">
-              Live Video Trial
+            </Link>
+            <Link href="/contact" className="relative py-2 text-white/90 hover:text-gold transition-colors duration-300 group">
+              Contact
               <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-gold transition-all duration-300 group-hover:w-full"></span>
-            </a>
-            <a href="/#savings-plan" className="relative py-2 text-white/90 hover:text-gold transition-colors duration-300 group">
-              Gold Scheme
-              <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-gold transition-all duration-300 group-hover:w-full"></span>
-            </a>
+            </Link>
           </nav>
 
           {/* RIGHT ACTION ICONS */}
@@ -100,15 +96,7 @@ export default function Header() {
               )}
             </Link>
 
-            {/* Direct WhatsApp Stylist Button */}
-            <a
-              href="https://wa.me/919431002445?text=Hello%20Tirupati%20Jewellers!%20I%20want%20to%20know%20more%20about%20your%20jewellery%20designs."
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden sm:inline-flex items-center gap-2 border border-gold/60 bg-gold/10 text-gold-light hover:bg-gold hover:text-black transition-all duration-300 font-sans text-[10px] tracking-[0.18em] uppercase font-bold px-4 py-2.5"
-            >
-              <span>💬</span> WhatsApp Stylist
-            </a>
+
 
             {/* Mobile Menu Button */}
             <button
@@ -187,35 +175,20 @@ export default function Header() {
             >
               Collections
             </a>
-            <a
-              href="/#bridal"
+            <Link
+              href="/about"
               onClick={() => setMobileMenuOpen(false)}
               className="block py-2 border-b border-white/5 hover:text-gold transition-colors"
             >
-              Bridal Trousseau
-            </a>
-            <a
-              href="/#video-shopping"
+              About Us
+            </Link>
+            <Link
+              href="/contact"
               onClick={() => setMobileMenuOpen(false)}
               className="block py-2 border-b border-white/5 hover:text-gold transition-colors"
             >
-              Live Video Trial
-            </a>
-            <a
-              href="/#savings-plan"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block py-2 border-b border-white/5 hover:text-gold transition-colors"
-            >
-              Swarna Nidhi Gold Scheme
-            </a>
-            <a
-              href="https://wa.me/919431002445"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block py-3 bg-gold text-black font-bold text-center uppercase tracking-widest mt-4"
-            >
-              Chat on WhatsApp
-            </a>
+              Contact
+            </Link>
           </div>
         </div>
       )}

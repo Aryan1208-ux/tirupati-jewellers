@@ -19,14 +19,16 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
 
   // Selected variant / Price
   const variant = product.variants?.find((v: any) => v.id === selectedVariantId) || product.variants?.[0];
-  const priceAmount = product.price ?? variant?.calculated_price?.calculated_amount ?? 85000;
+  const priceAmount = product.price ?? variant?.calculated_price?.calculated_amount;
   const currency = variant?.calculated_price?.currency_code?.toUpperCase() ?? "INR";
 
-  const formattedPrice = new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: currency,
-    maximumFractionDigits: 0,
-  }).format(priceAmount);
+  const formattedPrice = priceAmount === undefined || priceAmount === null
+    ? "Price Unavailable"
+    : new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: currency,
+        maximumFractionDigits: 0,
+      }).format(priceAmount);
 
   // Determine luxury image & title
   const lowerTitle = (product.title || "").toLowerCase();
@@ -203,10 +205,10 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
               <button
                 type="button"
                 onClick={handleAddToCart}
-                disabled={adding}
+                disabled={adding || priceAmount === undefined || priceAmount === null}
                 className="w-full bg-[#070707] hover:bg-gold text-white hover:text-black py-4.5 font-sans text-xs uppercase tracking-[0.25em] font-bold transition-all duration-300 shadow-xl disabled:opacity-50"
               >
-                {adding ? "ADDING TO SHOPPING BAG..." : "ADD TO SHOPPING BAG"}
+                {adding ? "ADDING TO SHOPPING BAG..." : priceAmount === undefined || priceAmount === null ? "PRICE UNAVAILABLE" : "ADD TO SHOPPING BAG"}
               </button>
 
               <a

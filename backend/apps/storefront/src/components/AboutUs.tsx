@@ -50,7 +50,7 @@ export default function AboutUs() {
       id="about" 
       className="py-28 bg-[#070707] text-white overflow-hidden relative"
     >
-      {/* 1989 Watermark Background */}
+      {/* 1997 Watermark Background */}
       <div 
         className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-all duration-1000 ease-out ${
           isVisible ? "opacity-100 scale-100" : "opacity-0 scale-95"

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useCart } from "@/context/CartContext";
 import Link from "next/link";
+import { trackActivity } from "@/lib/activity";
 
 interface ProductDetailViewProps {
   product: any;
@@ -17,53 +18,62 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
   const [adding, setAdding] = useState(false);
   const [addedMessage, setAddedMessage] = useState(false);
 
+  React.useEffect(() => {
+    trackActivity({
+      event_type: "PRODUCT_VIEW",
+      product_id: product.id,
+      variant_id: product.variants?.[0]?.id,
+    });
+  }, [product.id, product.variants]);
+
   // Selected variant / Price
   const variant = product.variants?.find((v: any) => v.id === selectedVariantId) || product.variants?.[0];
-  const priceAmount = product.price ?? variant?.calculated_price?.calculated_amount ?? 85000;
+  const priceAmount = product.price ?? variant?.calculated_price?.calculated_amount;
   const currency = variant?.calculated_price?.currency_code?.toUpperCase() ?? "INR";
 
-  const formattedPrice = new Intl.NumberFormat("en-IN", {
+  const formattedPrice = priceAmount != null ? new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: currency,
     maximumFractionDigits: 0,
-  }).format(priceAmount);
+  }).format(priceAmount) : "Price Unavailable";
 
-  // Determine luxury image & title
-  const lowerTitle = (product.title || "").toLowerCase();
-  const lowerHandle = (product.handle || "").toLowerCase();
-
-  let mainImage = product.imageUrl || product.thumbnail || "/image/luxury/prod_ring.jpg";
-  let displayTitle = product.title;
-  let subtitle = product.purity || "24K Pure Gold • VVS1 Clarity Solitaire";
-
-  if (lowerHandle.includes("t-shirt") && !product.purity) {
+  const displayTitle = product.title || "Untitled Product";
+  let mainImage = (product.imageUrl || product.thumbnail || (product.images && product.images.length > 0 ? product.images[0].url : null)) ?? "";
+  const isClothingDemoImage = mainImage && mainImage.includes("medusa-public-images");
+  if (!mainImage || isClothingDemoImage) {
     mainImage = "/image/luxury/prod_ring.jpg";
-    displayTitle = "Tirupati Empress Solitaire Diamond Ring";
-    subtitle = "24K Solid Gold • VVS1 Clarity Solitaire Diamond";
-  } else if (lowerHandle.includes("sweatshirt") && !product.purity) {
-    mainImage = "/image/luxury/prod_choker.jpg";
-    displayTitle = "Tirupati Royal Emerald & Polki Diamond Choker";
-    subtitle = "Handcrafted 22K Gold • Natural Emeralds & Uncut Polki";
-  } else if (lowerHandle.includes("sweatpants") && !product.purity) {
-    mainImage = "/image/luxury/prod_earrings.jpg";
-    displayTitle = "Tirupati Imperial Ruby & Temple Gold Jhumkas";
-    subtitle = "South Indian Heritage 22K Temple Gold • Burma Rubies";
-  } else if (lowerHandle.includes("shorts") && !product.purity) {
-    mainImage = "/image/luxury/prod_bracelet.jpg";
-    displayTitle = "Tirupati Eternal Diamond Tennis Bracelet Cuff";
-    subtitle = "18K Solid Gold • Round Brilliant Cut Diamonds";
   }
 
+  // Phase 22 & Phase 23: Parse Metadata & DO NOT INVENT VALUES
+  const rawMeta = product.metadata || {};
+  const jMeta = rawMeta.jewellery;
+
+  let subtitle = "Fine Jewellery";
+  if (jMeta?.purity && jMeta?.metal_type) {
+    subtitle = `${jMeta.purity} ${jMeta.metal_type}`;
+  } else if (rawMeta.purity) {
+    subtitle = String(rawMeta.purity);
+  }
+  
+  const badge = rawMeta.badge || product.badge;
   const [activeImage, setActiveImage] = useState(mainImage);
 
   const whatsappMessage = encodeURIComponent(
-    `Hello Tirupati Jewellers! I am interested in purchasing "${displayTitle}" priced at ${formattedPrice}. Could you please share more details and video preview?`
+    `Hello Tirupati Jewellers! I am interested in purchasing "${displayTitle}" priced at ${formattedPrice}. Could you please share more details?`
   );
 
   const handleAddToCart = async () => {
     setAdding(true);
     try {
       await addToCart(selectedVariantId, quantity);
+      
+      trackActivity({
+        event_type: "ADD_TO_CART",
+        product_id: product.id,
+        variant_id: selectedVariantId,
+        metadata: { quantity },
+      });
+
       setAddedMessage(true);
       setTimeout(() => setAddedMessage(false), 5000);
     } catch (e) {
@@ -96,9 +106,11 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
                 alt={displayTitle}
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 cursor-zoom-in"
               />
-              <span className="absolute top-4 left-4 bg-[#070707]/90 text-gold text-[9px] font-sans font-bold tracking-[0.25em] px-3 py-1 uppercase border border-gold/40">
-                {product.badge || "TIRUPATI SIGNATURE"}
-              </span>
+              {badge && (
+                <span className="absolute top-4 left-4 bg-[#070707]/90 text-gold text-[9px] font-sans font-bold tracking-[0.25em] px-3 py-1 uppercase border border-gold/40">
+                  {badge}
+                </span>
+              )}
             </div>
             
             {/* Secondary Thumbnails */}
@@ -111,29 +123,13 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
               >
                 <img src={mainImage} alt={displayTitle} className="w-full h-full object-cover" />
               </button>
-              <button
-                onClick={() => setActiveImage("/image/luxury/bridal.jpg")}
-                className={`w-24 h-24 bg-[#070707] border-2 transition-colors overflow-hidden ${
-                  activeImage === "/image/luxury/bridal.jpg" ? "border-gold" : "border-transparent opacity-70 hover:opacity-100"
-                }`}
-              >
-                <img src="/image/luxury/bridal.jpg" alt="Bridal Context" className="w-full h-full object-cover" />
-              </button>
-              <button
-                onClick={() => setActiveImage("/image/luxury/craftsmanship.jpg")}
-                className={`w-24 h-24 bg-[#070707] border-2 transition-colors overflow-hidden ${
-                  activeImage === "/image/luxury/craftsmanship.jpg" ? "border-gold" : "border-transparent opacity-70 hover:opacity-100"
-                }`}
-              >
-                <img src="/image/luxury/craftsmanship.jpg" alt="Atelier Setting" className="w-full h-full object-cover" />
-              </button>
             </div>
           </div>
 
           {/* Product Details Info */}
           <div className="lg:col-span-5 bg-white border border-cream-dark p-8 sm:p-12 shadow-sm">
             
-            <p className="font-sans text-[10px] tracking-[0.3em] uppercase text-gold font-bold mb-2">
+            <p className="font-sans text-[10px] tracking-[0.3em] uppercase text-gold font-bold mb-2 min-h-[16px]">
               {subtitle}
             </p>
             
@@ -145,32 +141,64 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
               {formattedPrice}
             </p>
 
-            {/* Specs Grid */}
+            {/* Structured Jewellery Specs Grid */}
             <div className="grid grid-cols-2 gap-3 p-4 bg-cream/70 border border-cream-dark mb-6 font-sans text-xs">
               <div>
-                <span className="text-charcoal-light uppercase text-[10px] tracking-wider block">Gold Purity:</span>
-                <span className="font-bold text-charcoal">{product.purity || "100% BIS 916 Hallmarked"}</span>
+                <span className="text-charcoal-light uppercase text-[10px] tracking-wider block">Purity:</span>
+                <span className="font-bold text-charcoal">{jMeta?.purity || rawMeta.purity || "Not specified"}</span>
               </div>
-              <div>
-                <span className="text-charcoal-light uppercase text-[10px] tracking-wider block">Diamond Grade:</span>
-                <span className="font-bold text-charcoal">{product.diamondWeight || "Certified VVS1-EF"}</span>
-              </div>
-              {product.goldWeight && (
+              
+              {(jMeta?.gross_weight_g || rawMeta.gold_weight) && (
                 <div>
-                  <span className="text-charcoal-light uppercase text-[10px] tracking-wider block">Net Gold Wt:</span>
-                  <span className="font-bold text-charcoal">{product.goldWeight}</span>
+                  <span className="text-charcoal-light uppercase text-[10px] tracking-wider block">Gross Weight:</span>
+                  <span className="font-bold text-charcoal">{jMeta?.gross_weight_g ? `${jMeta.gross_weight_g}g` : rawMeta.gold_weight}</span>
                 </div>
               )}
-              <div>
-                <span className="text-charcoal-light uppercase text-[10px] tracking-wider block">Assurance:</span>
-                <span className="font-bold text-green-700">Lifetime Buyback</span>
-              </div>
+              
+              {jMeta?.net_weight_g && (
+                <div>
+                  <span className="text-charcoal-light uppercase text-[10px] tracking-wider block">Net Weight:</span>
+                  <span className="font-bold text-charcoal">{jMeta.net_weight_g}g</span>
+                </div>
+              )}
+              
+              {jMeta?.hsn_sac && (
+                <div>
+                  <span className="text-charcoal-light uppercase text-[10px] tracking-wider block">HSN/SAC:</span>
+                  <span className="font-bold text-charcoal">{jMeta.hsn_sac}</span>
+                </div>
+              )}
+
+              {jMeta?.diamond && (
+                <div className="col-span-2 mt-2 pt-2 border-t border-cream-dark/50">
+                  <span className="text-charcoal-light uppercase text-[10px] tracking-wider block mb-1">Diamond Specifications:</span>
+                  <div className="flex flex-wrap gap-2 text-[10px]">
+                    {jMeta.diamond.carat && <span className="bg-white border border-cream-dark px-2 py-1">{jMeta.diamond.carat} Carat</span>}
+                    {jMeta.diamond.color && <span className="bg-white border border-cream-dark px-2 py-1">Color: {jMeta.diamond.color}</span>}
+                    {jMeta.diamond.clarity && <span className="bg-white border border-cream-dark px-2 py-1">Clarity: {jMeta.diamond.clarity}</span>}
+                    {jMeta.diamond.cut && <span className="bg-white border border-cream-dark px-2 py-1">Cut: {jMeta.diamond.cut}</span>}
+                  </div>
+                </div>
+              )}
+              
+              {jMeta?.certificate && (
+                <div className="col-span-2 mt-2 pt-2 border-t border-cream-dark/50">
+                  <span className="text-charcoal-light uppercase text-[10px] tracking-wider block mb-1">Certification:</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-charcoal">{jMeta.certificate.provider} {jMeta.certificate.type}</span>
+                    {jMeta.certificate.number && <span className="text-charcoal/60">#{jMeta.certificate.number}</span>}
+                    {jMeta.certificate.url && (
+                      <a href={jMeta.certificate.url} target="_blank" rel="noreferrer" className="text-gold hover:underline">Verify ↗</a>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="border-t border-b border-cream-dark py-6 mb-8">
               <p className="font-serif text-base text-charcoal/80 leading-relaxed">
                 {product.description ||
-                  "Handcrafted with microscopic precision by master goldsmiths at Tirupati Jewellers, this signature creation embodies royal elegance and lifelong heirloom value."}
+                  "Handcrafted with microscopic precision by master goldsmiths at Tirupati Jewellers, this creation embodies royal elegance."}
               </p>
             </div>
 
@@ -232,7 +260,7 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
             <div className="grid grid-cols-2 gap-4 border-t border-cream-dark pt-8 text-[11px] font-sans text-charcoal/85">
               <div className="flex items-center gap-3">
                 <span className="text-gold text-base">✦</span>
-                <span>100% BIS Hallmarked 22K/24K</span>
+                <span>100% BIS Hallmarked</span>
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-gold text-base">◇</span>
@@ -249,9 +277,7 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
             </div>
 
           </div>
-
         </div>
-
       </div>
     </div>
   );

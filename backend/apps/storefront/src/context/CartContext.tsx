@@ -35,7 +35,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         try {
           const { cart: retrievedCart } = await medusa.store.cart.retrieve(
             existingCartId,
-            { fields: "+items" }
+            { fields: "+items,+promotions" }
           );
           setCart(retrievedCart);
           setLoading(false);
@@ -68,7 +68,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       try {
         const { cart: retrievedCart } = await medusa.store.cart.retrieve(
           existingCartId,
-          { fields: "+items" }
+          { fields: "+items,+promotions" }
         );
         setCart(retrievedCart);
       } catch (error) {
@@ -143,15 +143,54 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const existingCartId = typeof window !== "undefined" ? localStorage.getItem("medusa_cart_id") : null;
     if (!existingCartId) return;
 
+    const cleanCode = code.trim().toUpperCase();
+    if (!cleanCode) return;
+
+    // Check if already applied
+    if (cart?.promotions?.some((p: any) => p.code?.toUpperCase() === cleanCode)) {
+      throw new Error(`Coupon "${cleanCode}" is already applied.`);
+    }
+
     try {
       setLoading(true);
-      await (medusa.store.cart as any).update(existingCartId, {
-        promo_codes: [code]
+      
+      const previousCodes = (cart?.promotions?.map((p: any) => p.code) || []).filter(Boolean);
+
+      // We explicitly use update to overwrite any existing manual promo codes.
+      // This enforces the "one manual coupon per cart" rule on the frontend.
+      let res = await (medusa.store.cart as any).update(existingCartId, {
+        promo_codes: [cleanCode],
       });
-      await refreshCart();
-    } catch (error) {
+      let resCart = res.cart;
+
+      // Check if the promotion was actually accepted by Medusa
+      const isNowApplied = resCart?.promotions?.some(
+        (p: any) => p.code?.toUpperCase() === cleanCode
+      );
+
+      if (!isNowApplied) {
+        // Rollback to previous codes if the new one was ineligible
+        if (previousCodes.length > 0) {
+          const rollbackRes = await (medusa.store.cart as any).update(existingCartId, {
+            promo_codes: previousCodes,
+          });
+          // Note: we don't need to setCart here because we throw immediately, 
+          // but we want the backend to be restored.
+        }
+        
+        throw new Error(
+          `Offer "${cleanCode}" is not eligible for your current cart. Please check the minimum purchase requirement.`
+        );
+      }
+
+      setCart(resCart);
+    } catch (error: any) {
       console.error("Error adding promotion:", error);
-      throw error;
+      let msg = error?.message || "Failed to apply coupon code.";
+      if (msg.includes("does not exist") || msg.includes("not found")) {
+        msg = `Coupon "${cleanCode}" is invalid or does not exist.`;
+      }
+      throw new Error(msg);
     } finally {
       setLoading(false);
     }
@@ -161,24 +200,27 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const existingCartId = typeof window !== "undefined" ? localStorage.getItem("medusa_cart_id") : null;
     if (!existingCartId) return;
 
+    const cleanCode = code.trim().toUpperCase();
+
     try {
       setLoading(true);
-      // In v2, you can also just pass the remaining promo codes or use a specific remove method if available
-      // The SDK uses update with promo_codes for setting/adding, but we can reset or use medusa.store.cart.removePromotions if available
-      try {
-        if (typeof (medusa.store.cart as any).removePromotions === "function") {
-          await (medusa.store.cart as any).removePromotions(existingCartId, { promo_codes: [code] });
-        } else {
-          // fallback to clear promotions if there's only one, or filter
-          const currentCodes = cart?.promotions?.map((p: any) => p.code) || [];
-          const newCodes = currentCodes.filter((c: string) => c !== code);
-          await (medusa.store.cart as any).update(existingCartId, { promo_codes: newCodes });
-        }
-      } catch (e) {
-        console.warn("Could not remove promotion via first method", e);
+      let resCart: any = null;
+
+      if (typeof (medusa.store.cart as any).removePromotions === "function") {
+        const res = await (medusa.store.cart as any).removePromotions(existingCartId, {
+          promo_codes: [cleanCode],
+        });
+        resCart = res.cart;
+      } else {
+        const currentCodes = cart?.promotions?.map((p: any) => p.code) || [];
+        const newCodes = currentCodes.filter((c: string) => c.toUpperCase() !== cleanCode);
+        const res = await (medusa.store.cart as any).update(existingCartId, {
+          promo_codes: newCodes,
+        });
+        resCart = res.cart;
       }
-      
-      await refreshCart();
+
+      setCart(resCart);
     } catch (error) {
       console.error("Error removing promotion:", error);
       throw error;

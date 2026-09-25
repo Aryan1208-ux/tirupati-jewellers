@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 
-const MEDUSA_BACKEND = "http://localhost:9000";
+const MEDUSA_BACKEND = "/api/medusa";
 
 interface ScanResult {
   product_id: string;
@@ -43,18 +43,7 @@ export default function BarcodeScannerPage() {
     };
   }, [router]);
 
-  const getAdminToken = async (): Promise<string> => {
-    const authRes = await fetch(`${MEDUSA_BACKEND}/auth/user/emailpass`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: "hello@tirupatijewellers.com",
-        password: "mysecurepassword123",
-      }),
-    });
-    const authData = await authRes.json();
-    return authData.token;
-  };
+
 
   const lookupBarcode = async (barcode: string) => {
     setLoading(true);
@@ -62,10 +51,8 @@ export default function BarcodeScannerPage() {
     setResult(null);
 
     try {
-      const token = await getAdminToken();
       const res = await fetch(
-        `${MEDUSA_BACKEND}/admin/barcodes?barcode=${encodeURIComponent(barcode)}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        `${MEDUSA_BACKEND}/admin/barcodes?barcode=${encodeURIComponent(barcode)}`
       );
       const data = await res.json();
 

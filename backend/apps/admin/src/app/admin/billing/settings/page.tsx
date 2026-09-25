@@ -3,31 +3,13 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { billingFetch } from "@/lib/billing-api";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { INDIA_STATES } from "@/lib/state-codes";
 
 const MEDUSA_URL = process.env.NEXT_PUBLIC_MEDUSA_URL || "http://localhost:9000";
 
-const INDIAN_STATES = [
-  { name: "Andhra Pradesh", code: "37" }, { name: "Arunachal Pradesh", code: "12" },
-  { name: "Assam", code: "18" }, { name: "Bihar", code: "10" },
-  { name: "Chhattisgarh", code: "22" }, { name: "Goa", code: "30" },
-  { name: "Gujarat", code: "24" }, { name: "Haryana", code: "06" },
-  { name: "Himachal Pradesh", code: "02" }, { name: "Jharkhand", code: "20" },
-  { name: "Karnataka", code: "29" }, { name: "Kerala", code: "32" },
-  { name: "Madhya Pradesh", code: "23" }, { name: "Maharashtra", code: "27" },
-  { name: "Manipur", code: "14" }, { name: "Meghalaya", code: "17" },
-  { name: "Mizoram", code: "15" }, { name: "Nagaland", code: "13" },
-  { name: "Odisha", code: "21" }, { name: "Punjab", code: "03" },
-  { name: "Rajasthan", code: "08" }, { name: "Sikkim", code: "11" },
-  { name: "Tamil Nadu", code: "33" }, { name: "Telangana", code: "36" },
-  { name: "Tripura", code: "16" }, { name: "Uttar Pradesh", code: "09" },
-  { name: "Uttarakhand", code: "05" }, { name: "West Bengal", code: "19" },
-  { name: "Delhi", code: "07" }, { name: "Jammu & Kashmir", code: "01" },
-  { name: "Ladakh", code: "38" }, { name: "Chandigarh", code: "04" },
-  { name: "Puducherry", code: "34" }, { name: "Lakshadweep", code: "31" },
-  { name: "Andaman & Nicobar", code: "35" }, { name: "Dadra & Nagar Haveli", code: "26" },
-  { name: "Daman & Diu", code: "25" },
-];
+
 
 export default function BillingSettingsPage() {
   const router = useRouter();
@@ -67,12 +49,13 @@ export default function BillingSettingsPage() {
   const loadSettings = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${MEDUSA_URL}/admin/billing/settings`);
+      const res = await billingFetch(`/admin/billing/settings`);
       if (res.ok) {
         const data = await res.json();
         if (data.settings) {
           setForm(prev => ({ ...prev, ...data.settings }));
         }
+
         setBackendOnline(true);
       }
     } catch {
@@ -83,7 +66,7 @@ export default function BillingSettingsPage() {
   };
 
   const handleStateChange = (stateName: string) => {
-    const found = INDIAN_STATES.find(s => s.name === stateName);
+    const found = INDIA_STATES.find(s => s.name === stateName);
     setForm(prev => ({
       ...prev,
       state: stateName,
@@ -103,7 +86,7 @@ export default function BillingSettingsPage() {
 
     setSaving(true);
     try {
-      const res = await fetch(`${MEDUSA_URL}/admin/billing/settings`, {
+      const res = await billingFetch(`/admin/billing/settings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -194,8 +177,8 @@ export default function BillingSettingsPage() {
                 <input type="text" value={form.city || ""} onChange={e => setForm({...form, city: e.target.value})} className={inputClass} />
               </Field>
               <Field label="State">
-                <select value={form.state} onChange={e => handleStateChange(e.target.value)} className={inputClass}>
-                  {INDIAN_STATES.map(s => (
+                <select value={form.state || ""} onChange={e => handleStateChange(e.target.value)} className={inputClass}>
+                  {INDIA_STATES.map(s => (
                     <option key={s.code} value={s.name}>{s.name} ({s.code})</option>
                   ))}
                 </select>
@@ -287,6 +270,35 @@ export default function BillingSettingsPage() {
                   className={inputClass}
                 />
               </Field>
+            </div>
+          </section>
+
+          {/* E-Invoice Settings (FUTURE) */}
+          <section className="bg-[#111111] border border-white/10 p-6 shadow-2xl opacity-70">
+            <h2 className="font-display text-xl text-white mb-6 pb-4 border-b border-white/10">
+              E-Invoice / IRN Integration
+            </h2>
+            <div className="mb-4">
+              <span className="text-gray-400 font-bold tracking-widest uppercase border border-gray-600 px-3 py-1">
+                STATUS: NOT ENABLED
+              </span>
+            </div>
+            <p className="text-gray-500 text-[11px] mb-6">
+              E-invoice/IRN integration is currently disabled. This integration can be enabled in the future when e-invoicing becomes legally applicable to the business. Normal GST offline billing will continue to work perfectly without this.
+            </p>
+            <div className="grid grid-cols-1 gap-5 text-[11px] leading-relaxed">
+              <div className="flex gap-4 border-b border-white/5 pb-2">
+                <div className="w-1/3 text-white/50 uppercase tracking-widest font-bold">Provider</div>
+                <div className="w-2/3 text-gray-500">Not configured</div>
+              </div>
+              <div className="flex gap-4 border-b border-white/5 pb-2">
+                <div className="w-1/3 text-white/50 uppercase tracking-widest font-bold">Environment</div>
+                <div className="w-2/3 text-gray-500">Not configured</div>
+              </div>
+              <div className="flex gap-4 pb-2">
+                <div className="w-1/3 text-white/50 uppercase tracking-widest font-bold">Integration</div>
+                <div className="w-2/3 text-gray-500">Disabled</div>
+              </div>
             </div>
           </section>
 

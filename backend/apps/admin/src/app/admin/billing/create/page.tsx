@@ -3,8 +3,10 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { getStoredJewelleryProducts } from "@/lib/admin-products";
-import { isAdminAuthenticated, getAdminUser } from "@/lib/admin-auth";
+import { fetchAdminProducts } from "@/lib/admin-products";
+import { billingFetch } from "@/lib/billing-api";
+import { isAdminAuthenticated, getAdminUser, logoutAdmin } from "@/lib/admin-auth";
+import { INDIA_STATES } from "@/lib/state-codes";
 
 const MEDUSA_URL = process.env.NEXT_PUBLIC_MEDUSA_URL || "http://localhost:9000";
 
@@ -21,6 +23,7 @@ interface LineItem {
   discount: number;
   gst_rate: number;
   isCustom?: boolean;
+  is_tax_inclusive?: boolean;
 }
 
 export default function CreateBillPage() {
@@ -36,12 +39,15 @@ export default function CreateBillPage() {
     state: "", state_code: "", pin: "", gstin: ""
   });
   const [paymentMethod, setPaymentMethod] = useState("Cash");
-  const [paymentStatus, setPaymentStatus] = useState("PAID");
+  const [paymentStatus, setPaymentStatus] = useState("");
   const [items, setItems] = useState<LineItem[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  const [documentType, setDocumentType] = useState("INV");
+  const [supplyType, setSupplyType] = useState("B2C");
 
   useEffect(() => {
     if (!isAdminAuthenticated()) {
@@ -49,42 +55,47 @@ export default function CreateBillPage() {
       return;
     }
     fetchSettings();
-    setProducts(getStoredJewelleryProducts());
+    fetchAdminProducts().then((prods) => {
+      if (prods && prods.length > 0) {
+        setProducts(prods);
+      }
+    });
   }, [router]);
 
   const fetchSettings = async () => {
     try {
-      const res = await fetch(`${MEDUSA_URL}/admin/billing/settings`);
+      const res = await billingFetch(`/admin/billing/settings`);
       if (res.ok) {
         const data = await res.json();
         setSettings(data.settings);
         setCustomerInfo(prev => ({
           ...prev,
-          state_code: data.settings?.state_code || "07",
-          state: data.settings?.state || "",
+          state_code: "",
+          state: "",
         }));
         setBackendOnline(true);
       }
     } catch {
       setBackendOnline(false);
-      setSettings({ state_code: "07", invoice_prefix: "TJ/", financial_year: "2026-27" });
-      setCustomerInfo(prev => ({ ...prev, state_code: "07" }));
+      setSettings({ invoice_prefix: "TJ/", financial_year: "2026-27" });
     }
   };
 
   const addProductItem = useCallback((product: any) => {
+    const jMeta = product.jewellery || {};
     const newItem: LineItem = {
       product_id: product.id,
       product_name: product.title,
       sku: product.handle || "",
-      hsn: "", // Intentionally blank — force staff to fill for GST compliance
+      hsn: jMeta.hsn_sac || "",
       quantity: 1,
-      gross_weight: product.goldWeight || "",
-      net_weight: product.goldWeight || "",
-      purity: product.purity || "",
-      rate: product.price,
+      gross_weight: jMeta.gross_weight_g ? String(jMeta.gross_weight_g) : (product.goldWeight || ""),
+      net_weight: jMeta.net_weight_g ? String(jMeta.net_weight_g) : (jMeta.gross_weight_g ? String(jMeta.gross_weight_g) : (product.goldWeight || "")),
+      purity: jMeta.purity || product.purity || "",
+      rate: product.price || 0,
       discount: 0,
       gst_rate: 3, // default for jewellery, adjustable per line
+      is_tax_inclusive: true, // catalog products are tax inclusive
     };
     setItems(prev => [...prev, newItem]);
     setSearchQuery("");
@@ -105,6 +116,7 @@ export default function CreateBillPage() {
       discount: 0,
       gst_rate: 3,
       isCustom: true,
+      is_tax_inclusive: true,
     };
     setItems(prev => [...prev, newItem]);
   };
@@ -129,8 +141,18 @@ export default function CreateBillPage() {
     items.forEach(item => {
       const lineSubtotal = Number(item.rate) * Number(item.quantity);
       const lineDiscount = Math.min(Number(item.discount || 0), lineSubtotal);
-      const lineTaxable = lineSubtotal - lineDiscount;
-      const lineGst = lineTaxable * (Number(item.gst_rate) / 100);
+      
+      let lineTaxable = 0;
+      let lineGst = 0;
+      if (item.is_tax_inclusive) {
+        const finalAmountAfterDiscount = lineSubtotal - lineDiscount;
+        lineTaxable = finalAmountAfterDiscount / (1 + (Number(item.gst_rate) / 100));
+        lineGst = finalAmountAfterDiscount - lineTaxable;
+      } else {
+        lineTaxable = lineSubtotal - lineDiscount;
+        lineGst = lineTaxable * (Number(item.gst_rate) / 100);
+      }
+
       subtotal += lineSubtotal;
       totalDiscount += lineDiscount;
       taxable_amount += lineTaxable;
@@ -151,8 +173,13 @@ export default function CreateBillPage() {
   const validate = (): boolean => {
     const errs: Record<string, string> = {};
     if (items.length === 0) errs.items = "Please add at least one product.";
+    if (!customerInfo.name.trim()) errs.name = "Customer name is required.";
+    if (!paymentStatus) errs.paymentStatus = "Please select a payment status.";
     if (customerType === "b2b" && (!customerInfo.gstin || customerInfo.gstin.length !== 15)) {
       errs.gstin = "Valid 15-character GSTIN required for B2B.";
+    }
+    if (customerInfo.state_code && !INDIA_STATES.find(s => s.code === customerInfo.state_code)) {
+      errs.state_code = "Invalid State Code.";
     }
     const missingHsn = items.filter(it => !it.hsn?.trim());
     if (missingHsn.length > 0) {
@@ -181,7 +208,7 @@ export default function CreateBillPage() {
 
       const payload = {
         customer_type: customerType,
-        customer_name: customerInfo.name.trim() || "Cash Customer",
+        customer_name: customerInfo.name.trim(),
         mobile_number: customerInfo.mobile || null,
         address: customerInfo.address || null,
         city: customerInfo.city || null,
@@ -191,6 +218,8 @@ export default function CreateBillPage() {
         gstin: customerInfo.gstin || null,
         payment_method: paymentMethod,
         payment_status: paymentStatus,
+        document_type: documentType,
+        supply_type: supplyType,
         items: items.map(it => ({
           product_id: it.product_id,
           product_name: it.product_name,
@@ -203,10 +232,11 @@ export default function CreateBillPage() {
           rate: it.rate,
           discount: it.discount,
           gst_rate: it.gst_rate,
+          is_tax_inclusive: it.is_tax_inclusive ?? true,
         })),
       };
 
-      const res = await fetch(`${MEDUSA_URL}/admin/billing/invoices`, {
+      const res = await billingFetch(`/admin/billing/invoices`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -216,6 +246,13 @@ export default function CreateBillPage() {
         const data = await res.json();
         router.push(`/admin/billing/history?id=${data.invoice.id}`);
       } else {
+        if (res.status === 401) {
+          setErrors({ submit: "Session expired. Redirecting to login..." });
+          setTimeout(() => {
+            logoutAdmin();
+          }, 1500);
+          return;
+        }
         const err = await res.json();
         setErrors({ submit: err.error || "Failed to generate invoice." });
         submitLock.current = false;
@@ -289,7 +326,11 @@ export default function CreateBillPage() {
                         <input
                           type="radio"
                           checked={customerType === type}
-                          onChange={() => setCustomerType(type)}
+                          onChange={() => {
+                            setCustomerType(type);
+                            setSupplyType(type === "b2c" ? "B2C" : "B2B");
+                            if (type === "b2c") setCustomerInfo(prev => ({ ...prev, gstin: "" }));
+                          }}
                           className="accent-gold"
                         />
                         <span className="uppercase tracking-widest text-[10px] font-bold text-white/80">
@@ -300,15 +341,59 @@ export default function CreateBillPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <FormField label="Customer Name">
-                    <input
-                      type="text"
-                      value={customerInfo.name}
-                      onChange={e => setCustomerInfo({ ...customerInfo, name: e.target.value })}
-                      placeholder="Cash Customer"
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                  <FormField label="Document Type">
+                    <select
+                      value={documentType}
+                      onChange={e => setDocumentType(e.target.value)}
                       className={inp}
-                    />
+                    >
+                      <option value="INV">Invoice</option>
+                      <option value="CRN">Credit Note</option>
+                      <option value="DBN">Debit Note</option>
+                    </select>
+                  </FormField>
+                  <FormField label="Supply Type">
+                    <select
+                      value={supplyType}
+                      onChange={e => setSupplyType(e.target.value)}
+                      className={inp}
+                    >
+                      <option value="B2C">B2C</option>
+                      <option value="B2B">B2B</option>
+                      <option value="SEZWP">SEZ with Payment</option>
+                      <option value="SEZWOP">SEZ without Payment</option>
+                      <option value="EXPWP">Export with Payment</option>
+                      <option value="EXPWOP">Export without Payment</option>
+                      <option value="DEXP">Deemed Export</option>
+                    </select>
+                  </FormField>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField label="Customer Name" error={errors.name}>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={customerInfo.name}
+                        onChange={e => {
+                          setCustomerInfo({ ...customerInfo, name: e.target.value });
+                          setErrors(prev => ({ ...prev, name: "" }));
+                        }}
+                        placeholder="Enter Name..."
+                        className={`${inp} ${errors.name ? "border-red-500" : ""}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCustomerInfo(prev => ({ ...prev, name: "Walk-in Customer" }));
+                          setErrors(prev => ({ ...prev, name: "" }));
+                        }}
+                        className="absolute right-2 top-2 bg-[#222] hover:bg-[#333] border border-white/20 text-white/70 px-2 py-0.5 text-[9px] uppercase tracking-wider transition-colors"
+                      >
+                        Walk-in
+                      </button>
+                    </div>
                   </FormField>
                   <FormField label="Mobile Number">
                     <input
@@ -361,15 +446,22 @@ export default function CreateBillPage() {
                     <FormField label="State">
                       <input type="text" value={customerInfo.state} onChange={e => setCustomerInfo({ ...customerInfo, state: e.target.value })} className={inp} placeholder="e.g. Delhi" />
                     </FormField>
-                    <FormField label="State Code">
-                      <input
-                        type="text"
-                        maxLength={2}
+                    <FormField label="State Code" error={errors.state_code}>
+                      <select
                         value={customerInfo.state_code}
-                        onChange={e => setCustomerInfo({ ...customerInfo, state_code: e.target.value.replace(/\D/g, "") })}
-                        className={inp}
-                        placeholder="07"
-                      />
+                        onChange={e => {
+                          const code = e.target.value;
+                          const st = INDIA_STATES.find(s => s.code === code);
+                          setCustomerInfo({ ...customerInfo, state_code: code, state: st ? st.name : customerInfo.state });
+                          setErrors(prev => ({ ...prev, state_code: "" }));
+                        }}
+                        className={`${inp} ${errors.state_code ? "border-red-500" : ""}`}
+                      >
+                        <option value="">Select State</option>
+                        {INDIA_STATES.map(s => (
+                          <option key={s.code} value={s.code}>{s.code} - {s.name}</option>
+                        ))}
+                      </select>
                       {customerInfo.state_code === settings?.state_code && (
                         <p className="text-emerald-400 text-[9px] mt-0.5">→ CGST + SGST (Intra-state)</p>
                       )}
@@ -456,18 +548,29 @@ export default function CreateBillPage() {
                           <th className="p-3 w-[8%]">HSN</th>
                           <th className="p-3 w-[6%] text-center">Qty</th>
                           <th className="p-3 w-[10%]">Weight</th>
-                          <th className="p-3 w-[12%] text-right">Rate (₹)</th>
-                          <th className="p-3 w-[10%] text-right">Disc. (₹)</th>
+                          <th className="p-3 w-[10%] text-right">Rate (₹)</th>
+                          <th className="p-3 w-[8%] text-right">Disc. (₹)</th>
+                          <th className="p-3 w-[5%] text-center" title="Tax Inclusive?">Incl.</th>
                           <th className="p-3 w-[8%] text-center">GST%</th>
-                          <th className="p-3 w-[11%] text-right">Total (₹)</th>
+                          <th className="p-3 w-[10%] text-right">Total (₹)</th>
                           <th className="p-3 w-[4%]"></th>
                         </tr>
                       </thead>
                       <tbody>
                         {items.map((item, idx) => {
                           const lineSubtotal = item.rate * item.quantity;
-                          const lineTaxable = lineSubtotal - Math.min(item.discount || 0, lineSubtotal);
-                          const lineGst = lineTaxable * (item.gst_rate / 100);
+                          const lineDiscount = Math.min(item.discount || 0, lineSubtotal);
+                          
+                          let lineTaxable = 0;
+                          let lineGst = 0;
+                          if (item.is_tax_inclusive) {
+                            const finalAmountAfterDiscount = lineSubtotal - lineDiscount;
+                            lineTaxable = finalAmountAfterDiscount / (1 + (item.gst_rate / 100));
+                            lineGst = finalAmountAfterDiscount - lineTaxable;
+                          } else {
+                            lineTaxable = lineSubtotal - lineDiscount;
+                            lineGst = lineTaxable * (item.gst_rate / 100);
+                          }
                           const lineTotal = lineTaxable + lineGst;
                           const hsnMissing = !item.hsn?.trim();
                           return (
@@ -529,6 +632,14 @@ export default function CreateBillPage() {
                                   value={item.discount}
                                   onChange={e => updateItem(idx, "discount", Math.min(Number(e.target.value), lineSubtotal))}
                                   className="bg-transparent border-b border-white/20 w-full focus:border-gold outline-none text-right"
+                                />
+                              </td>
+                              <td className="p-3 text-center">
+                                <input
+                                  type="checkbox"
+                                  checked={item.is_tax_inclusive ?? true}
+                                  onChange={e => updateItem(idx, "is_tax_inclusive", e.target.checked)}
+                                  className="accent-gold w-4 h-4"
                                 />
                               </td>
                               <td className="p-3">
@@ -624,13 +735,18 @@ export default function CreateBillPage() {
                     </label>
                     <select
                       value={paymentStatus}
-                      onChange={e => setPaymentStatus(e.target.value)}
-                      className="w-full bg-[#181818] border border-white/20 p-2.5 text-white focus:border-gold outline-none"
+                      onChange={e => {
+                        setPaymentStatus(e.target.value);
+                        setErrors(prev => ({ ...prev, paymentStatus: "" }));
+                      }}
+                      className={`w-full bg-[#181818] border p-2.5 text-white focus:border-gold outline-none ${errors.paymentStatus ? "border-red-500" : "border-white/20"}`}
                     >
+                      <option value="" disabled>Select Payment Status</option>
                       <option value="PAID">Paid</option>
                       <option value="PARTIALLY_PAID">Partially Paid</option>
                       <option value="PENDING">Pending</option>
                     </select>
+                    {errors.paymentStatus && <p className="text-red-400 mt-1 text-[10px]">{errors.paymentStatus}</p>}
                   </div>
                 </div>
 

@@ -88,33 +88,13 @@ export default function Footer() {
           </ul>
         </div>
 
-        {/* HERITAGE, ASSURANCE & ADMIN */}
-        <div>
-          <h4 className="font-sans text-xs tracking-[0.25em] uppercase text-white font-bold mb-6">
-            Store Administration
-          </h4>
-          <p className="font-serif text-sm text-white/60 mb-5 leading-relaxed">
-            Staff & admin portal to add new jewellery, manage gold/diamond rates, and oversee orders.
-          </p>
-          <div className="mb-6">
-            <a
-              href={process.env.NEXT_PUBLIC_ADMIN_URL || "http://localhost:3002/admin/login"}
-              className="inline-flex items-center gap-2 border border-gold/50 bg-gold/10 hover:bg-gold hover:text-black text-gold-light px-4 py-2.5 font-sans text-[11px] uppercase tracking-wider font-bold transition-colors"
-            >
-              <span>👑</span> Admin Login Portal
-            </a>
-          </div>
-        </div>
+
 
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between text-[11px] text-white/40 font-sans gap-4">
         <p>© 2026 Tirupati Jewellers. All rights reserved.</p>
         <div className="flex items-center gap-4">
-          <a href={process.env.NEXT_PUBLIC_ADMIN_URL || "http://localhost:3002/admin/login"} className="hover:text-gold text-white/50">
-            Admin Portal
-          </a>
-          <span className="text-white/20">|</span>
           <p className="tracking-[0.25em] uppercase text-[10px] text-gold-light/60">Sculpted with Royal Devotion.</p>
         </div>
       </div>

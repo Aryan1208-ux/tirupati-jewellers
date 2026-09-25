@@ -2,27 +2,50 @@ import React from "react";
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 import AboutUs from "@/components/AboutUs";
+import { getStoreCategories, getStoreProducts, StoreCategory } from "@/lib/medusa-categories";
 
-// Fetch products from Medusa Backend (SSR)
-async function getFeaturedProducts() {
-  try {
-    const res = await fetch("http://localhost:9000/store/products?limit=4", {
-      next: { revalidate: 10 },
-      headers: {
-        "x-publishable-api-key": process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "",
-      },
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.products || [];
-  } catch (error) {
-    console.error("Error fetching products:", error);
-    return [];
+function getCategoryVisuals(cat: StoreCategory, index: number) {
+  const handle = (cat.handle || "").toLowerCase();
+  const name = (cat.name || "").toLowerCase();
+
+  let img = "/image/luxury/prod_ring.jpg";
+  let subtitle = "Brilliant cut & royal settings";
+  let tag = `0${index + 1} • Signature Suite`;
+
+  if (handle.includes("ring") || name.includes("ring")) {
+    img = "/image/luxury/rings.jpg";
+    subtitle = "Brilliant cut & royal settings";
+    tag = `0${index + 1} • Solitaire & Polki`;
+  } else if (handle.includes("necklace") || handle.includes("choker") || name.includes("necklace")) {
+    img = "/image/luxury/necklaces.jpg";
+    subtitle = "Regal temple & bridal neckpieces";
+    tag = `0${index + 1} • Chokers & Haars`;
+  } else if (handle.includes("earring") || handle.includes("jhumka") || name.includes("earring")) {
+    img = "/image/luxury/earrings.jpg";
+    subtitle = "Intricate drops & diamond studs";
+    tag = `0${index + 1} • Chandbalis & Jhumkas`;
+  } else if (handle.includes("bracelet") || handle.includes("kada") || name.includes("bracelet")) {
+    img = "/image/luxury/bracelets.jpg";
+    subtitle = "Solid gold filigree & diamond bangles";
+    tag = `0${index + 1} • Kadas & Tennis Cuffs`;
+  } else if (handle.includes("diamond") || name.includes("diamond")) {
+    img = "/image/luxury/craftsmanship.jpg";
+    subtitle = "Exquisite precision diamonds";
+    tag = `0${index + 1} • Sustainable Sparkle`;
+  } else if (handle.includes("bridal") || name.includes("bridal")) {
+    img = "/image/luxury/bridal.jpg";
+    subtitle = "Imperial heritage trousseau suites";
+    tag = `0${index + 1} • Royal Bridal`;
   }
+
+  return { img, subtitle, tag };
 }
 
 export default async function Home() {
-  const products = await getFeaturedProducts();
+  const [categories, products] = await Promise.all([
+    getStoreCategories(),
+    getStoreProducts(),
+  ]);
 
   return (
     <div className="bg-cream text-charcoal">
@@ -54,13 +77,13 @@ export default async function Home() {
 
             {/* Headline */}
             <h1 className="font-display text-4xl sm:text-6xl lg:text-7xl font-normal leading-[1.08] mb-6 text-white tracking-wide">
-              Timeless Elegance, <br />
-              <span className="italic font-serif text-gold-light">Royal Splendour.</span>
+              Timeless Elegance.<br />
+              <span className="italic font-serif text-gold-light">Since 1997.</span>
             </h1>
 
             {/* Subhead */}
             <p className="font-serif text-base sm:text-lg text-white/80 font-light leading-relaxed mb-10 max-w-xl">
-              Welcome to <strong>Tirupati Jewellers</strong>. Discover handcrafted 100% BIS 916 hallmarked 22K/24K gold, certified solitaires, and heirloom bridal jewellery crafted to shine through generations.
+              Crafted with tradition, designed for generations. Discover handcrafted 100% BIS 916 hallmarked 22K/24K gold, certified solitaires, and heirloom bridal jewellery.
             </p>
 
             {/* CTA Buttons */}
@@ -69,14 +92,8 @@ export default async function Home() {
                 href="/shop"
                 className="bg-gold hover:bg-gold-light text-[#070707] px-9 py-4 font-sans text-xs tracking-[0.25em] uppercase font-bold text-center transition-all duration-300 shadow-2xl hover:shadow-gold/20"
               >
-                Explore High Jewellery
+                Explore Collection
               </Link>
-              <a
-                href="#video-shopping"
-                className="border border-gold/60 bg-gold/10 hover:bg-gold hover:text-black text-gold-light px-8 py-4 font-sans text-xs tracking-[0.22em] uppercase font-bold text-center transition-all duration-300 backdrop-blur-sm"
-              >
-                📹 Book Video Call Trial
-              </a>
             </div>
 
           </div>
@@ -133,71 +150,41 @@ export default async function Home() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            
-            {/* RINGS */}
-            <Link href="/shop?category=rings" className="luxury-card group p-5 block">
-              <div className="img-zoom-container relative aspect-square bg-[#0a0a0a] mb-6 overflow-hidden">
-                <img src="/image/luxury/rings.jpg" alt="Tirupati Jewellers Rings Collection" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </div>
-              <div className="flex justify-between items-end">
-                <div>
-                  <span className="font-sans text-[10px] text-gold font-bold tracking-[0.2em] uppercase">01 • Solitaire & Polki</span>
-                  <h3 className="font-serif text-2xl font-normal text-charcoal mt-1 group-hover:text-gold-dark transition-colors">Rings</h3>
-                  <p className="font-sans text-[11px] text-charcoal-light mt-1">Brilliant cut & royal settings</p>
-                </div>
-                <span className="text-gold text-lg group-hover:translate-x-1.5 transition-transform duration-300">→</span>
-              </div>
-            </Link>
-
-            {/* NECKLACES */}
-            <Link href="/shop?category=necklaces" className="luxury-card group p-5 block">
-              <div className="img-zoom-container relative aspect-square bg-[#0a0a0a] mb-6 overflow-hidden">
-                <img src="/image/luxury/necklaces.jpg" alt="Tirupati Jewellers Necklaces Collection" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </div>
-              <div className="flex justify-between items-end">
-                <div>
-                  <span className="font-sans text-[10px] text-gold font-bold tracking-[0.2em] uppercase">02 • Chokers & Haars</span>
-                  <h3 className="font-serif text-2xl font-normal text-charcoal mt-1 group-hover:text-gold-dark transition-colors">Necklaces</h3>
-                  <p className="font-sans text-[11px] text-charcoal-light mt-1">Regal temple & bridal neckpieces</p>
-                </div>
-                <span className="text-gold text-lg group-hover:translate-x-1.5 transition-transform duration-300">→</span>
-              </div>
-            </Link>
-
-            {/* EARRINGS */}
-            <Link href="/shop?category=earrings" className="luxury-card group p-5 block">
-              <div className="img-zoom-container relative aspect-square bg-[#0a0a0a] mb-6 overflow-hidden">
-                <img src="/image/luxury/earrings.jpg" alt="Tirupati Jewellers Earrings Collection" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </div>
-              <div className="flex justify-between items-end">
-                <div>
-                  <span className="font-sans text-[10px] text-gold font-bold tracking-[0.2em] uppercase">03 • Chandbalis & Jhumkas</span>
-                  <h3 className="font-serif text-2xl font-normal text-charcoal mt-1 group-hover:text-gold-dark transition-colors">Earrings</h3>
-                  <p className="font-sans text-[11px] text-charcoal-light mt-1">Intricate drops & diamond studs</p>
-                </div>
-                <span className="text-gold text-lg group-hover:translate-x-1.5 transition-transform duration-300">→</span>
-              </div>
-            </Link>
-
-            {/* BRACELETS */}
-            <Link href="/shop?category=bracelets" className="luxury-card group p-5 block">
-              <div className="img-zoom-container relative aspect-square bg-[#0a0a0a] mb-6 overflow-hidden">
-                <img src="/image/luxury/bracelets.jpg" alt="Tirupati Jewellers Bracelets Collection" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </div>
-              <div className="flex justify-between items-end">
-                <div>
-                  <span className="font-sans text-[10px] text-gold font-bold tracking-[0.2em] uppercase">04 • Kadas & Tennis Cuffs</span>
-                  <h3 className="font-serif text-2xl font-normal text-charcoal mt-1 group-hover:text-gold-dark transition-colors">Bracelets</h3>
-                  <p className="font-sans text-[11px] text-charcoal-light mt-1">Solid gold filigree & diamond bangles</p>
-                </div>
-                <span className="text-gold text-lg group-hover:translate-x-1.5 transition-transform duration-300">→</span>
-              </div>
-            </Link>
-
+            {categories.map((cat, index) => {
+              const { img, subtitle, tag } = getCategoryVisuals(cat, index);
+              return (
+                <Link
+                  key={cat.id}
+                  href={`/shop?category=${encodeURIComponent(cat.handle)}`}
+                  className="luxury-card group p-5 block"
+                >
+                  <div className="img-zoom-container relative aspect-square bg-[#0a0a0a] mb-6 overflow-hidden">
+                    <img
+                      src={img}
+                      alt={`Tirupati Jewellers ${cat.name} Collection`}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  </div>
+                  <div className="flex justify-between items-end">
+                    <div>
+                      <span className="font-sans text-[10px] text-gold font-bold tracking-[0.2em] uppercase">
+                        {tag}
+                      </span>
+                      <h3 className="font-serif text-2xl font-normal text-charcoal mt-1 group-hover:text-gold-dark transition-colors capitalize">
+                        {cat.name}
+                      </h3>
+                      <p className="font-sans text-[11px] text-charcoal-light mt-1">
+                        {cat.description || subtitle}
+                      </p>
+                    </div>
+                    <span className="text-gold text-lg group-hover:translate-x-1.5 transition-transform duration-300">
+                      →
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
 
         </div>
@@ -330,53 +317,7 @@ export default async function Home() {
       </section>
 
 
-      {/* 6. SWARNA NIDHI GOLD SAVINGS PLAN */}
-      <section id="savings-plan" className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-[#121212] via-[#1a1710] to-[#121212] text-white border-b border-gold/30">
-        <div className="max-w-7xl mx-auto text-center">
-          
-          <p className="font-sans text-[11px] tracking-[0.35em] uppercase text-gold-light font-bold mb-3">
-            SMART GOLD ACCUMULATION
-          </p>
-          <h2 className="font-display text-3xl sm:text-5xl font-normal text-white mb-6">
-            Tirupati Swarna Nidhi Gold Scheme
-          </h2>
-          <p className="font-serif text-base sm:text-lg text-white/80 max-w-2xl mx-auto mb-12 font-light">
-            Plan for future weddings and festivals smartly. Pay 11 monthly installments and get a bonus contribution from Tirupati Jewellers on your 12th month to buy 100% hallmarked gold jewellery!
-          </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto text-left mb-12">
-            
-            <div className="p-8 border border-gold/30 bg-[#070707]/60">
-              <span className="font-display text-2xl text-gold font-bold mb-2 block">Step 01</span>
-              <h4 className="font-sans text-xs uppercase tracking-wider font-bold mb-2">Choose Monthly Amount</h4>
-              <p className="font-serif text-sm text-white/70">Start with flexible monthly installments starting from ₹2,000 to ₹50,000.</p>
-            </div>
-
-            <div className="p-8 border border-gold/30 bg-[#070707]/60">
-              <span className="font-display text-2xl text-gold font-bold mb-2 block">Step 02</span>
-              <h4 className="font-sans text-xs uppercase tracking-wider font-bold mb-2">Tirupati Special Bonus</h4>
-              <p className="font-serif text-sm text-white/70">Enjoy zero making-charge discounts and special gold rate lock protection.</p>
-            </div>
-
-            <div className="p-8 border border-gold/30 bg-[#070707]/60">
-              <span className="font-display text-2xl text-gold font-bold mb-2 block">Step 03</span>
-              <h4 className="font-sans text-xs uppercase tracking-wider font-bold mb-2">Redeem in Fine Jewellery</h4>
-              <p className="font-serif text-sm text-white/70">Redeem across any gold or diamond jewellery item in our collection.</p>
-            </div>
-
-          </div>
-
-          <a
-            href="https://wa.me/919431002445?text=Hello%20Tirupati%20Jewellers!%20I%20want%20to%20enroll%20in%20the%20Swarna%20Nidhi%20Gold%20Savings%20Plan."
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block bg-gold hover:bg-gold-light text-[#070707] px-9 py-4 font-sans text-xs tracking-[0.25em] uppercase font-bold transition-colors shadow-2xl"
-          >
-            Enroll in Swarna Nidhi Scheme
-          </a>
-
-        </div>
-      </section>
 
 
       {/* 7. FEATURED PIECES (DYNAMIC MEDUSA PRODUCTS) */}

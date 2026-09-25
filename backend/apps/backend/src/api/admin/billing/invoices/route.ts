@@ -1,6 +1,7 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { BILLING_MODULE } from "../../../../modules/billing"
 import BillingModuleService from "../../../../modules/billing/service"
+import { isValidStateCode, INDIA_STATES } from "../../../../modules/billing/utils/state-codes"
 
 // Simple in-process mutex to prevent concurrent invoice number generation
 // For multi-instance deployments, use a DB-level advisory lock instead.
@@ -57,6 +58,8 @@ export async function POST(
       payment_status = "PAID",
       due_date,
       reminder_enabled,
+      document_type = "INV",
+      supply_type = "B2C",
       items,
     } = req.body as any
 
@@ -66,6 +69,9 @@ export async function POST(
     }
     if (customer_type === "b2b" && (!gstin || gstin.length !== 15)) {
       return res.status(400).json({ error: "Valid 15-character GSTIN is required for B2B invoices." })
+    }
+    if (state_code && !isValidStateCode(state_code)) {
+      return res.status(400).json({ error: `Invalid state code: ${state_code}. Must be a valid 2-digit Indian state code.` })
     }
 
     // ── Auto-create or find customer ─────────────────────────────────────────
@@ -160,8 +166,8 @@ export async function POST(
     let sgst = 0
     let igst = 0
 
-    const [settings] = await billingModule.listBillingSettings()
-    const shopStateCode = settings?.state_code || "07"
+    const [billingSettings] = await billingModule.listBillingSettings()
+    const shopStateCode = billingSettings?.state_code || "07"
     const isIntraState = shopStateCode === state_code
 
     for (const item of items) {
@@ -171,8 +177,17 @@ export async function POST(
 
       const lineSubtotal = Number(item.rate) * Number(item.quantity)
       const lineDiscount = Math.min(Number(item.discount || 0), lineSubtotal) // never discount > price
-      const lineTaxable = lineSubtotal - lineDiscount
-      const lineGst = lineTaxable * (Number(item.gst_rate || 0) / 100)
+      
+      let lineTaxable = 0
+      let lineGst = 0
+      if (item.is_tax_inclusive) {
+        const finalAmountAfterDiscount = lineSubtotal - lineDiscount
+        lineTaxable = finalAmountAfterDiscount / (1 + (Number(item.gst_rate || 0) / 100))
+        lineGst = finalAmountAfterDiscount - lineTaxable
+      } else {
+        lineTaxable = lineSubtotal - lineDiscount
+        lineGst = lineTaxable * (Number(item.gst_rate || 0) / 100)
+      }
 
       subtotal += lineSubtotal
       totalDiscount += lineDiscount
@@ -200,8 +215,17 @@ export async function POST(
     const formattedItems = items.map((item: any) => {
       const lineSubtotal = Number(item.rate) * Number(item.quantity)
       const lineDiscount = Math.min(Number(item.discount || 0), lineSubtotal)
-      const lineTaxable = lineSubtotal - lineDiscount
-      const lineGst = lineTaxable * (Number(item.gst_rate || 0) / 100)
+      
+      let lineTaxable = 0
+      let lineGst = 0
+      if (item.is_tax_inclusive) {
+        const finalAmountAfterDiscount = lineSubtotal - lineDiscount
+        lineTaxable = finalAmountAfterDiscount / (1 + (Number(item.gst_rate || 0) / 100))
+        lineGst = finalAmountAfterDiscount - lineTaxable
+      } else {
+        lineTaxable = lineSubtotal - lineDiscount
+        lineGst = lineTaxable * (Number(item.gst_rate || 0) / 100)
+      }
       return {
         product_id: item.product_id || null,
         product_name: item.product_name,
@@ -219,6 +243,38 @@ export async function POST(
         total: lineTaxable + lineGst,
       }
     })
+
+    // ── Check for active festival for Bill Greeting ────────────────────────────
+    let festival_id: string | null = null
+    let festival_name: string | null = null
+    let festival_greeting_text: string | null = null
+    let festival_template_id: string | null = null
+
+    try {
+      const today = new Date()
+      const allOccasions = await billingModule.listBillingGreetingOccasions({ is_active: true, enable_on_bill: true })
+      const activeFestival = allOccasions.find(occ => {
+        const start = new Date(occ.start_date)
+        const end = new Date(occ.end_date)
+        start.setHours(0,0,0,0)
+        end.setHours(23,59,59,999)
+        return today.getTime() >= start.getTime() && today.getTime() <= end.getTime()
+      })
+
+      if (activeFestival && activeFestival.bill_greeting_text) {
+        festival_id = activeFestival.id
+        festival_name = activeFestival.name
+        festival_greeting_text = activeFestival.bill_greeting_text
+        
+        // Find if there is an associated template for snapshotting purposes, though text is primary
+        const templates = await billingModule.listBillingGreetingTemplates({ is_active: true, occasion_type: "FESTIVAL" })
+        if (templates.length > 0) {
+          festival_template_id = templates[0].id
+        }
+      }
+    } catch (e) {
+      console.error("Failed to inject festival greeting:", e)
+    }
 
     // ── Save invoice atomically ──────────────────────────────────────────────
     const invoice = await billingModule.createBillingInvoices({
@@ -246,6 +302,13 @@ export async function POST(
       payment_method: payment_method || "Cash",
       payment_status: payment_status as "PAID" | "PARTIALLY_PAID" | "PENDING" | "CANCELLED",
       customer_id: customerId ?? undefined,
+      document_type,
+      supply_type: customer_type === "b2b" ? "B2B" : "B2C",
+      e_invoice_status: "NOT_APPLICABLE",
+      festival_id,
+      festival_name,
+      festival_greeting_text,
+      festival_template_id,
     })
 
     // Create line items linked to the invoice
@@ -303,4 +366,5 @@ export async function GET(
   }
 }
 
-export const AUTHENTICATE = false;
+// Medusa admin authentication is enabled by default for /admin/* routes.
+// No AUTHENTICATE export needed — Medusa enforces admin JWT auth.

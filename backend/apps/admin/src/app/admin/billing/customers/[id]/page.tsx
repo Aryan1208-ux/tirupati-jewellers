@@ -3,11 +3,12 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
+import { billingFetch } from "@/lib/billing-api";
 import { isAdminAuthenticated, getAdminUser } from "@/lib/admin-auth";
 
 const MEDUSA_URL = process.env.NEXT_PUBLIC_MEDUSA_URL || "http://localhost:9000";
 
-type Tab = "overview" | "bills" | "payments" | "messages" | "followups" | "notes" | "activity";
+type Tab = "overview" | "bills" | "payments" | "messages" | "followups" | "notes" | "estimates" | "greetings" | "activity";
 
 export default function CustomerProfilePage() {
   const router = useRouter();
@@ -34,7 +35,7 @@ export default function CustomerProfilePage() {
   const fetchCustomer = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${MEDUSA_URL}/admin/billing/customers/${customerId}`);
+      const res = await billingFetch(`/admin/billing/customers/${customerId}`);
       if (res.ok) {
         const data = await res.json();
         setCustomer(data.customer);
@@ -77,6 +78,8 @@ export default function CustomerProfilePage() {
     { key: "messages", label: "Messages", count: customer.message_logs?.length },
     { key: "followups", label: "Follow-ups", count: customer.follow_ups?.length },
     { key: "notes", label: "Notes", count: customer.notes?.length },
+    { key: "estimates", label: "Estimates", count: customer.estimates?.length },
+    { key: "greetings", label: "Greetings", count: customer.greetings?.length },
     { key: "activity", label: "Website Activity" },
   ];
 
@@ -174,12 +177,14 @@ export default function CustomerProfilePage() {
         {activeTab === "notes" && (
           <NotesTab customerId={customerId} notes={customer.notes || []} fmtDateTime={fmtDateTime} onRefresh={fetchCustomer} />
         )}
+        {activeTab === "estimates" && (
+          <EstimatesTab estimates={customer.estimates || []} fmtCur={fmtCur} fmtDate={fmtDate} />
+        )}
+        {activeTab === "greetings" && (
+          <GreetingsTab customer={customer} greetings={customer.greetings || []} fmtDateTime={fmtDateTime} onRefresh={fetchCustomer} />
+        )}
         {activeTab === "activity" && (
-          <div className="bg-[#111111] border border-white/10 p-10 text-center text-white/40">
-            <p className="text-3xl mb-3">🌐</p>
-            <p>Website Activity tracking will be available in Phase 3.</p>
-            <p className="text-[10px] mt-2 text-white/20">Customer browsing history, product views, searches, and session data.</p>
-          </div>
+          <ActivityTab customerId={customerId} />
         )}
       </main>
 
@@ -257,6 +262,18 @@ function OverviewTab({ customer, summary, fmtCur, fmtDate, fmtDateTime }: any) {
             <InfoRow label="Address" value={[customer.address, customer.city, customer.state].filter(Boolean).join(", ")} />
             <InfoRow label="GSTIN" value={customer.gstin} />
             <InfoRow label="Type" value={customer.customer_type?.toUpperCase()} />
+            {customer.date_of_birth && <InfoRow label="Date of Birth" value={fmtDate(customer.date_of_birth)} />}
+            {customer.anniversary_date && <InfoRow label="Anniversary" value={fmtDate(customer.anniversary_date)} />}
+            
+            <div className="pt-2 mt-2 border-t border-white/10">
+              <span className="text-white/40 text-[10px] uppercase tracking-wider block mb-1">Opt-ins</span>
+              <div className="flex gap-2">
+                <span className={`text-[10px] px-2 py-0.5 rounded-full ${customer.greeting_opt_in ? "bg-green-900 text-green-300" : "bg-red-900 text-red-300"}`}>Greetings</span>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full ${customer.whatsapp_opt_in ? "bg-green-900 text-green-300" : "bg-red-900 text-red-300"}`}>WhatsApp</span>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full ${customer.sms_opt_in ? "bg-green-900 text-green-300" : "bg-red-900 text-red-300"}`}>SMS</span>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full ${customer.email_opt_in ? "bg-green-900 text-green-300" : "bg-red-900 text-red-300"}`}>Email</span>
+              </div>
+            </div>
           </dl>
         </div>
 
@@ -449,7 +466,7 @@ function FollowUpsTab({ customerId, followUps, fmtDate, onRefresh }: any) {
     e.preventDefault();
     setSaving(true);
     try {
-      await fetch(`${MEDUSA_URL}/admin/billing/customers/${customerId}/follow-ups`, {
+      await billingFetch(`/admin/billing/customers/${customerId}/follow-ups`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -461,7 +478,7 @@ function FollowUpsTab({ customerId, followUps, fmtDate, onRefresh }: any) {
   };
 
   const handleComplete = async (id: string) => {
-    await fetch(`${MEDUSA_URL}/admin/billing/customers/${customerId}/follow-ups`, {
+    await billingFetch(`/admin/billing/customers/${customerId}/follow-ups`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, status: "COMPLETED" }),
@@ -548,7 +565,7 @@ function NotesTab({ customerId, notes, fmtDateTime, onRefresh }: any) {
     if (!newNote.trim()) return;
     setSaving(true);
     try {
-      await fetch(`${MEDUSA_URL}/admin/billing/customers/${customerId}/notes`, {
+      await billingFetch(`/admin/billing/customers/${customerId}/notes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ note: newNote, created_by: getAdminUser() || "Admin" }),
@@ -603,7 +620,7 @@ function ReminderModal({ customer, invoice, fmtCur, onClose, onSent }: any) {
     setSending(true);
     try {
       // Log the message
-      await fetch(`${MEDUSA_URL}/admin/billing/messages`, {
+      await billingFetch(`/admin/billing/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -704,7 +721,7 @@ function RecordPaymentModal({ customer, invoice, fmtCur, onClose, onRecorded }: 
     setSaving(true);
     setError("");
     try {
-      const res = await fetch(`${MEDUSA_URL}/admin/billing/payments`, {
+      const res = await billingFetch(`/admin/billing/payments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -803,6 +820,116 @@ function InfoRow({ label, value }: { label: string; value?: string | null }) {
   );
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   ESTIMATES TAB
+   ═══════════════════════════════════════════════════════════════════════════ */
+function EstimatesTab({ estimates, fmtCur, fmtDate }: any) {
+  return (
+    <div className="bg-[#111111] border border-white/10 shadow-xl overflow-x-auto">
+      <div className="p-4 border-b border-white/10 flex justify-between items-center">
+        <h4 className="font-display text-white">Estimates</h4>
+        <Link href="/admin/billing/estimates/create" className="bg-gold hover:bg-gold-light text-[#070707] px-4 py-1.5 text-[10px] uppercase tracking-widest font-bold">
+          + Create Estimate
+        </Link>
+      </div>
+      <table className="w-full text-left min-w-[800px]">
+        <thead className="bg-[#181818] text-gold-light uppercase tracking-wider text-[10px] border-b border-white/10">
+          <tr>
+            <th className="py-3 px-5">Estimate No</th>
+            <th className="py-3 px-5">Date</th>
+            <th className="py-3 px-5">Valid Until</th>
+            <th className="py-3 px-5 text-right">Total</th>
+            <th className="py-3 px-5 text-center">Status</th>
+            <th className="py-3 px-5 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-white/5">
+          {estimates.map((est: any) => (
+            <tr key={est.id} className="hover:bg-[#161616]">
+              <td className="py-3 px-5 font-mono font-medium text-white text-[11px]">{est.estimate_number}</td>
+              <td className="py-3 px-5 text-white/60">{fmtDate(est.created_at)}</td>
+              <td className="py-3 px-5 text-white/60">{fmtDate(est.valid_until)}</td>
+              <td className="py-3 px-5 text-right font-serif text-sm text-gold font-bold">{fmtCur(Number(est.grand_total))}</td>
+              <td className="py-3 px-5 text-center">
+                <span className={`px-2 py-1 text-[9px] uppercase tracking-wider font-bold ${
+                  est.status === 'CONVERTED' ? 'bg-green-900/50 text-green-400' :
+                  est.status === 'DRAFT' ? 'bg-gray-800 text-gray-300' :
+                  est.status === 'ISSUED' ? 'bg-blue-900/50 text-blue-400' :
+                  'bg-red-900/50 text-red-400'
+                }`}>
+                  {est.status}
+                </span>
+              </td>
+              <td className="py-3 px-5 text-center">
+                <Link href={`/admin/billing/estimates/${est.id}`} className="text-gold-light hover:text-white underline text-[10px]">View</Link>
+              </td>
+            </tr>
+          ))}
+          {estimates.length === 0 && (
+            <tr><td colSpan={6} className="py-12 text-center text-white/40">No estimates for this customer.</td></tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GREETINGS TAB
+   ═══════════════════════════════════════════════════════════════════════════ */
+function GreetingsTab({ customer, greetings, fmtDateTime, onRefresh }: any) {
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h4 className="font-display text-lg text-white">Automated Greetings</h4>
+      </div>
+      <div className="bg-[#161616] border border-white/10 p-4 rounded-sm flex gap-6 text-sm">
+        <div>
+          <span className="text-white/50 block text-[10px] uppercase tracking-wider mb-1">Birthday</span>
+          <span className="text-white">{customer.date_of_birth ? new Date(customer.date_of_birth).toLocaleDateString() : 'Not set'}</span>
+        </div>
+        <div>
+          <span className="text-white/50 block text-[10px] uppercase tracking-wider mb-1">Anniversary</span>
+          <span className="text-white">{customer.anniversary_date ? new Date(customer.anniversary_date).toLocaleDateString() : 'Not set'}</span>
+        </div>
+        <div>
+          <span className="text-white/50 block text-[10px] uppercase tracking-wider mb-1">Opt-In Status</span>
+          <span className={customer.greeting_opt_in ? "text-green-400" : "text-red-400"}>
+            {customer.greeting_opt_in ? 'Enabled' : 'Disabled'}
+          </span>
+        </div>
+      </div>
+      <div className="bg-[#111111] border border-white/10 shadow-xl">
+        {greetings.length === 0 ? (
+          <div className="py-12 text-center text-white/40">No greetings sent to this customer.</div>
+        ) : (
+          <div className="divide-y divide-white/5">
+            {greetings.map((m: any) => (
+              <div key={m.id} className="p-5 hover:bg-[#161616]">
+                <div className="flex justify-between items-start gap-4">
+                  <div>
+                    <p className="text-white/90 font-bold">{m.occasion_name}</p>
+                    <p className="text-[10px] text-white/50 mt-1">
+                      {m.channel?.toUpperCase()} • {m.status}
+                    </p>
+                  </div>
+                  <span className="text-[10px] text-white/30 shrink-0">{m.sent_at ? fmtDateTime(m.sent_at) : 'Not sent'}</span>
+                </div>
+                <p className="mt-3 text-white/60 text-[11px] whitespace-pre-line bg-[#0a0a0a] p-3 border border-white/5">
+                  {m.rendered_message}
+                </p>
+                {m.error_message && (
+                  <p className="mt-2 text-red-400 text-[10px]">Error: {m.error_message}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
     PAID: "bg-green-900/40 text-green-400 border-green-800/50",
@@ -841,5 +968,103 @@ function FollowUpStatusBadge({ status }: { status: string }) {
     <span className={`text-[9px] font-bold px-2 py-0.5 border tracking-wider uppercase ${map[status] || "bg-white/10 text-white/60 border-white/20"}`}>
       {status}
     </span>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ACTIVITY TAB
+   ═══════════════════════════════════════════════════════════════════════════ */
+function ActivityTab({ customerId }: { customerId: string }) {
+  const [activities, setActivities] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchActivity();
+  }, [customerId]);
+
+  const fetchActivity = async () => {
+    setLoading(true);
+    try {
+      const res = await billingFetch(`/admin/customers/${customerId}/activity`);
+      if (res.ok) {
+        const data = await res.json();
+        setActivities(data.activities || []);
+      }
+    } catch (err) {
+      console.error("Failed to load activity", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fmtDateTime = (d: string) => new Date(d).toLocaleString("en-IN", {
+    day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
+  });
+
+  if (loading) {
+    return <div className="p-10 text-center text-white/40">Loading activity...</div>;
+  }
+
+  return (
+    <div className="bg-[#111111] border border-white/10 shadow-xl p-5">
+      <h4 className="text-gold-light uppercase tracking-widest text-[10px] font-bold mb-4 flex items-center gap-2">
+        <span>🌐</span> Website Activity Timeline
+      </h4>
+      {activities.length === 0 ? (
+        <div className="py-12 text-center text-white/40">
+          <p>No website activity recorded yet.</p>
+        </div>
+      ) : (
+        <div className="space-y-0">
+          {activities.map((act) => {
+            let icon = "🌐";
+            let color = "rgba(255,255,255,0.1)";
+            
+            switch (act.event_type) {
+              case "PAGE_VIEW":
+                icon = "👁️"; break;
+              case "PRODUCT_VIEW":
+                icon = "💍"; color = "rgba(212,175,55,0.15)"; break;
+              case "ADD_TO_CART":
+                icon = "🛍️"; color = "rgba(34,197,94,0.15)"; break;
+              case "CHECKOUT_STARTED":
+                icon = "💳"; color = "rgba(59,130,246,0.15)"; break;
+              case "ORDER_PLACED":
+                icon = "✅"; color = "rgba(34,197,94,0.3)"; break;
+            }
+
+            return (
+              <div key={act.id} className="flex gap-4 py-4 border-b border-white/5 last:border-0 hover:bg-[#161616] -mx-5 px-5 transition-colors">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg shrink-0 border border-white/5" style={{ background: color }}>
+                  {icon}
+                </div>
+                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                  <div className="flex justify-between items-start">
+                    <p className="text-white/90 font-bold capitalize text-sm">{act.event_type.replace(/_/g, " ")}</p>
+                    <span className="text-[10px] text-white/30 shrink-0 ml-4 font-mono">{fmtDateTime(act.created_at)}</span>
+                  </div>
+                  
+                  {act.page_path && (
+                    <p className="text-[11px] text-white/50 mt-1 font-mono">
+                      <span className="text-white/30 mr-2">Path:</span> {act.page_path}
+                    </p>
+                  )}
+                  {act.product_id && (
+                    <p className="text-[11px] text-gold/70 mt-1">
+                      <span className="text-white/30 mr-2">Product:</span> {act.product_id}
+                    </p>
+                  )}
+                  {act.metadata && Object.keys(act.metadata).length > 0 && (
+                    <div className="mt-2 text-[10px] text-white/40 bg-[#0a0a0a] border border-white/5 p-2 font-mono break-all">
+                      {JSON.stringify(act.metadata)}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }

@@ -62,4 +62,4 @@ export async function GET(
   }
 }
 
-export const AUTHENTICATE = false;
+// Admin authentication enforced by Medusa default for /admin/* routes.

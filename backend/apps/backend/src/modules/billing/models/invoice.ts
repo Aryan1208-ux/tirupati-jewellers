@@ -1,4 +1,6 @@
 import { model } from "@medusajs/framework/utils"
+import { BillingEstimate } from "./estimate"
+import { BillingGreetingHistory } from "./greetings"
 
 // ─── Customer ───────────────────────────────────────────────────────────────
 
@@ -16,6 +18,14 @@ export const BillingCustomer = model.define("billing_customer", {
   customer_type: model.enum(["b2c", "b2b"]).default("b2c"),
   status: model.enum(["ACTIVE", "PAYMENT_PENDING", "PAID", "INACTIVE"]).default("ACTIVE"),
 
+  date_of_birth: model.dateTime().nullable(),
+  anniversary_date: model.dateTime().nullable(),
+  preferred_greeting_language: model.text().default("en"),
+  greeting_opt_in: model.boolean().default(true),
+  whatsapp_opt_in: model.boolean().default(true),
+  sms_opt_in: model.boolean().default(true),
+  email_opt_in: model.boolean().default(true),
+
   invoices: model.hasMany(() => BillingInvoice, {
     mappedBy: "customer",
   }),
@@ -29,6 +39,12 @@ export const BillingCustomer = model.define("billing_customer", {
     mappedBy: "customer",
   }),
   message_logs: model.hasMany(() => BillingMessageLog, {
+    mappedBy: "customer",
+  }),
+  estimates: model.hasMany(() => BillingEstimate, {
+    mappedBy: "customer",
+  }),
+  greetings: model.hasMany(() => BillingGreetingHistory, {
     mappedBy: "customer",
   }),
 })
@@ -70,6 +86,29 @@ export const BillingInvoice = model.define("billing_invoice", {
   created_by: model.text().nullable(),
   cancelled_by: model.text().nullable(),
   cancellation_reason: model.text().nullable(),
+
+  // E-Invoice Fields
+  document_type: model.enum(["INV", "CRN", "DBN"]).default("INV"),
+  supply_type: model.enum(["B2B", "B2C", "SEZWP", "SEZWOP", "EXPWP", "EXPWOP", "DEXP"]).default("B2C"),
+  e_invoice_status: model.enum(["NOT_APPLICABLE", "PENDING", "SUBMITTING", "GENERATED", "FAILED", "CANCELLED"]).default("NOT_APPLICABLE"),
+  irn: model.text().nullable(),
+  ack_number: model.text().nullable(),
+  ack_date: model.dateTime().nullable(),
+  signed_qr_code: model.text().nullable(),
+  signed_invoice: model.text().nullable(),
+  e_invoice_error: model.text().nullable(),
+  e_invoice_created_at: model.dateTime().nullable(),
+  e_invoice_cancelled_at: model.dateTime().nullable(),
+  e_invoice_cancel_reason: model.text().nullable(),
+  provider: model.text().nullable(),
+  environment: model.text().nullable(),
+  request_reference: model.text().nullable(),
+
+  // Festival Greeting Snapshot
+  festival_id: model.text().nullable(),
+  festival_name: model.text().nullable(),
+  festival_greeting_text: model.text().nullable(),
+  festival_template_id: model.text().nullable(),
 
   items: model.hasMany(() => BillingInvoiceItem, {
     mappedBy: "invoice",

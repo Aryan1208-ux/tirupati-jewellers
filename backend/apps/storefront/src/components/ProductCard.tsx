@@ -12,7 +12,7 @@ interface ProductCardProps {
     thumbnail?: string | null;
     imageUrl?: string;
     description?: string | null;
-    purity?: string;
+    metadata?: any;
     price?: number;
     badge?: string;
     variants?: Array<{
@@ -23,6 +23,7 @@ interface ProductCardProps {
         currency_code: string;
       };
     }>;
+    images?: Array<{ id: string; url: string }>;
   };
 }
 
@@ -35,61 +36,37 @@ export default function ProductCard({ product }: ProductCardProps) {
   const variant = product.variants?.[0];
   const priceAmount =
     product.price ??
-    variant?.calculated_price?.calculated_amount ??
-    85000;
+    variant?.calculated_price?.calculated_amount;
   
   const currency = variant?.calculated_price?.currency_code?.toUpperCase() ?? "INR";
   
-  // Format price in Indian Rupee format
-  const formattedPrice = new Intl.NumberFormat("en-IN", {
+  const formattedPrice = priceAmount != null ? new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: currency,
     maximumFractionDigits: 0,
-  }).format(priceAmount);
+  }).format(priceAmount) : "Price Unavailable";
 
   // Determine image
-  let imageUrl = product.imageUrl || product.thumbnail;
-  const lowerTitle = (product.title || "").toLowerCase();
-  const lowerHandle = (product.handle || "").toLowerCase();
-
-  if (!imageUrl || imageUrl.includes("amazonaws.com") || lowerHandle.includes("t-shirt") || lowerHandle.includes("sweatshirt") || lowerHandle.includes("sweatpants") || lowerHandle.includes("shorts")) {
-    if (lowerTitle.includes("ring") || lowerHandle.includes("t-shirt")) {
-      imageUrl = "/image/luxury/prod_ring.jpg";
-    } else if (lowerTitle.includes("necklace") || lowerTitle.includes("pendant") || lowerTitle.includes("choker") || lowerHandle.includes("sweatshirt")) {
-      imageUrl = "/image/luxury/prod_choker.jpg";
-    } else if (lowerTitle.includes("earring") || lowerTitle.includes("jhumka") || lowerHandle.includes("sweatpants")) {
-      imageUrl = "/image/luxury/prod_earrings.jpg";
-    } else if (lowerTitle.includes("bracelet") || lowerTitle.includes("bangle") || lowerHandle.includes("shorts")) {
-      imageUrl = "/image/luxury/prod_bracelet.jpg";
-    } else if (lowerTitle.includes("bridal")) {
-      imageUrl = "/image/luxury/bridal.jpg";
-    } else {
-      imageUrl = "/image/luxury/prod_ring.jpg";
-    }
+  let imageUrl: string = (product.imageUrl || product.thumbnail || (product.images && product.images.length > 0 ? product.images[0].url : null)) ?? "";
+  const isClothingDemoImage = imageUrl && imageUrl.includes("medusa-public-images");
+  if (!imageUrl || isClothingDemoImage) {
+    imageUrl = "/image/luxury/prod_ring.jpg"; // Single generic fallback for missing image
   }
 
-  // Generate hallmarks & badges
-  let badge = product.badge || "ROYAL EDITION";
-  let subtitle = product.purity || "BIS 916 • 22K Gold";
-  let displayTitle = product.title;
+  // Phase 22: Parse Metadata / DO NOT GUESS missing data
+  const rawMeta = product.metadata || {};
+  const jMeta = rawMeta.jewellery;
 
-  if (lowerHandle.includes("t-shirt") && !product.purity) {
-    displayTitle = "Tirupati Empress Solitaire Diamond Ring";
-    subtitle = "24K Gold • VVS1 Clarity Solitaire";
-    badge = "BESTSELLER";
-  } else if (lowerHandle.includes("sweatshirt") && !product.purity) {
-    displayTitle = "Tirupati Royal Emerald & Polki Choker";
-    subtitle = "22K Pure Gold • Zambian Emeralds";
-    badge = "ROYAL BRIDAL";
-  } else if (lowerHandle.includes("sweatpants") && !product.purity) {
-    displayTitle = "Tirupati Imperial Ruby Temple Jhumkas";
-    subtitle = "22K Heritage Gold • Burma Rubies";
-    badge = "HERITAGE TEMPLE";
-  } else if (lowerHandle.includes("shorts") && !product.purity) {
-    displayTitle = "Tirupati Eternal Diamond Tennis Bracelet";
-    subtitle = "18K Solid Gold • Round Diamonds";
-    badge = "SIGNATURE";
+  // Render Subtitle safely
+  let subtitle = "Fine Jewellery";
+  if (jMeta?.purity && jMeta?.metal_type) {
+    subtitle = `${jMeta.purity} ${jMeta.metal_type}`;
+  } else if (rawMeta.purity) {
+    subtitle = String(rawMeta.purity);
   }
+
+  const badge = rawMeta.badge || product.badge;
+  const displayTitle = product.title || "Untitled Product";
 
   const whatsappMessage = encodeURIComponent(
     `Hello Tirupati Jewellers! I am interested in purchasing "${displayTitle}" priced at ${formattedPrice}. Could you please share more details and video preview?`
@@ -113,13 +90,6 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <div className="luxury-card group flex flex-col p-5 bg-white relative overflow-hidden">
       
-      {/* BADGE */}
-      <div className="absolute top-4 left-4 z-10">
-        <span className="bg-[#070707] text-gold-light text-[9px] font-sans font-bold tracking-[0.2em] px-3 py-1 uppercase border border-gold/40">
-          {badge}
-        </span>
-      </div>
-
       {/* IMAGE CONTAINER WITH ZOOM */}
       <div className="img-zoom-container relative aspect-square bg-[#0a0a0a] mb-5 overflow-hidden">
         <Link href={`/product/${product.handle}`}>
@@ -129,12 +99,17 @@ export default function ProductCard({ product }: ProductCardProps) {
             className="w-full h-full object-cover"
           />
         </Link>
+        {badge && (
+          <span className="absolute top-2 left-2 bg-[#070707]/90 text-gold text-[8px] font-sans font-bold tracking-[0.2em] px-2 py-0.5 uppercase border border-gold/40">
+            {badge}
+          </span>
+        )}
       </div>
 
       {/* CONTENT */}
       <div className="flex flex-col flex-grow text-center">
         
-        <p className="font-sans text-[10px] text-gold font-bold tracking-[0.25em] uppercase mb-1">
+        <p className="font-sans text-[10px] text-gold font-bold tracking-[0.25em] uppercase mb-1 min-h-[16px]">
           {subtitle}
         </p>
 
@@ -144,31 +119,28 @@ export default function ProductCard({ product }: ProductCardProps) {
           </h3>
         </Link>
 
+        {jMeta?.gross_weight_g && (
+          <p className="font-sans text-[10px] text-charcoal/50 mb-1">
+            {jMeta.gross_weight_g}g
+          </p>
+        )}
+
         <p className="font-serif text-xl text-gold-dark font-medium mt-auto mb-4">
           {formattedPrice}
         </p>
 
         {/* ACTIONS */}
-        <div className="grid grid-cols-2 gap-2 pt-3 border-t border-cream-dark">
-          <a
-            href={`https://wa.me/919431002445?text=${whatsappMessage}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="py-2.5 px-2 bg-[#f4f1ea] hover:bg-[#e7e0d0] text-[#128C7E] font-sans text-[10px] tracking-wider uppercase font-bold flex items-center justify-center gap-1 transition-colors"
-          >
-            <span>💬</span> WhatsApp
-          </a>
+        <div className="pt-3 border-t border-cream-dark">
           <button
             onClick={handleQuickAdd}
             disabled={adding}
-            className="py-2.5 px-2 bg-[#070707] hover:bg-gold text-white hover:text-black font-sans text-[10px] tracking-wider uppercase font-bold transition-colors disabled:opacity-50"
+            className="w-full py-3 bg-[#070707] hover:bg-gold text-white hover:text-black font-sans text-[10px] tracking-wider uppercase font-bold transition-colors disabled:opacity-50"
           >
             {added ? "✓ Added" : adding ? "Adding..." : "+ Add to Bag"}
           </button>
         </div>
 
       </div>
-
     </div>
   );
 }
