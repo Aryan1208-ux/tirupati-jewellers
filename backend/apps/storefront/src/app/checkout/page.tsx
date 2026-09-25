@@ -96,7 +96,8 @@ export default function CheckoutPage() {
           handler: async function (response: any) {
             try {
               // Verify on backend
-              const verifyRes = await fetch("http://localhost:9000/store/razorpay/verify", {
+              const baseUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000";
+              const verifyRes = await fetch(`${baseUrl}/store/razorpay/verify`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(response)
