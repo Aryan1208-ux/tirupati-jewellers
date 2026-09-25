@@ -57,5 +57,5 @@ npm run storefront:dev
 
 ## 🔐 Credentials & API Keys
 
-- **Publishable API Key**: `pk_590c4cf136467921ded373e89ab6466e22e1196cd0aa934eed8413ffb719df01`
-- **Database URL**: `postgresql://postgres:postgres@localhost:5432/medusa-tirupati`
+- **Publishable API Key**: Stored in `apps/storefront/.env.local` and `apps/admin/.env.local` as `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY`
+- **Database URL**: Stored in `apps/backend/.env` as `DATABASE_URL`
