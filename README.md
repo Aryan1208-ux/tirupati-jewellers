@@ -53,9 +53,3 @@ npm run storefront:dev
 - **Checkout (`/checkout`)**: Multi-step checkout form connected to Medusa cart shipping and contact details with Cash-on-Delivery and Online payment selection.
 - **Order Confirmation (`/order-confirmation`)**: Order tracking reference and celebratory confirmation.
 
----
-
-## 🔐 Credentials & API Keys
-
-- **Publishable API Key**: Stored in `apps/storefront/.env.local` and `apps/admin/.env.local` as `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY`
-- **Database URL**: Stored in `apps/backend/.env` as `DATABASE_URL`
